@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS fonction(
     fonction VARCHAR(80)
 )ENGINE = InnoDB CHARACTER SET utf8mb4;
 
-INSERT INTO fonction(fontion) values ('Pasteur','Pasteur Associer','Diacre')
+INSERT INTO fonction(fonction) values ('Pasteur');
 --end fonction (Pasteur, Pasteur Associer, Predicateur, Administrateur, Diacre, Tresorier, Moniteur(trice),Directeur des chants)
 
 --membre
