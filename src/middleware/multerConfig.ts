@@ -29,7 +29,6 @@ const MIME_TYPES: any = {
 const storage = multer.diskStorage({
     /* destination: (req, file, callback) => { callback(null, "src\\images"); }, */
     filename: (req, file, callback) => {
-        console.log(req, file)
         if (file.mimetype.startsWith('image')) {
             const extension: Array = MIME_TYPES[file.mimetype];
             callback(null, Date.now() + '.' + extension);
