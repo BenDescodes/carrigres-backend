@@ -4,5 +4,6 @@ import PredRouter from "./predicateurs"
 import credentials from "./credentials"
 import fonctionRouter from "./fonction"
 import dashboardRouter from "./dashboard"
+import contactRouter from "./contact"
 
-export { MembresRouter, SermonRouter, PredRouter, credentials, fonctionRouter, dashboardRouter }
+export { MembresRouter, SermonRouter, PredRouter, credentials, fonctionRouter, dashboardRouter, contactRouter }

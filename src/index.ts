@@ -2,7 +2,7 @@ import * as dotenv from "dotenv"
 import express from "express"
 import cors from "cors"
 import helmet from "helmet"
-import { credentials, MembresRouter, PredRouter, SermonRouter, fonctionRouter, dashboardRouter } from "./routes"
+import { credentials, MembresRouter, PredRouter, SermonRouter, fonctionRouter, dashboardRouter, contactRouter } from "./routes"
 import path from "path"
 
 //App Varaibles
@@ -27,6 +27,7 @@ app.use("/api/predicateurs", PredRouter)
 app.use("/api/credentials", credentials)
 app.use("/api/fonctions", fonctionRouter)
 app.use("/api/dashboard", dashboardRouter)
+app.use("/api/contact", contactRouter)
 
 //exporting app
 module.exports = app

@@ -97,16 +97,30 @@ CREATE TABLE IF NOT EXISTS predicateur(
 )ENGINE = InnoDB CHARACTER SET utf8mb4;
 /* end predicateur */
 
+CREATE TABLE IF NOT EXISTS activeMembre(
+    idActive INT PRIMARY KEY AUTO_INCREMENT,
+    activeMembre BOOLEAN default 0
+);
+INSERT INTO activeMembre(activeMembre) VALUES(true);
+
 /*View*/
 CREATE OR REPLACE VIEW v_membre_user AS SELECT idUsers,nom, prenom, postnom,idRole, role, login,profil,isActive,mdp FROM users 
 LEFT JOIN membre ON fkMembre = idMembre
 INNER JOIN role on fkRole = idRole;
 
 CREATE OR REPLACE VIEW v_membre_all AS SELECT m.idMembre,m.nom,m.prenom,m.postnom,m.telephone,m.dateNaissance,m.email,m.sexe,m.avenue,
-m.quartier,m.commune,m.reference,f.fonction,pere.nom nomPere,pere.prenom prenomPere,mere.nom nomMere,mere.prenom prenomMere,c.nom nomConjoint,c.prenom prenomConjoint,m.isBaptise,m.egliseBaptise,m.dateDecede,m.profil,m.tkMembre 
+m.quartier,m.commune,m.reference,f.fonction,pere.nom nomPere,pere.prenom prenomPere,mere.nom nomMere,mere.prenom prenomMere,c.nom nomConjoint,c.prenom prenomConjoint,c.tkMembre tkConjoint, m.isBaptise, m.egliseBaptise,m.dateDecede,m.profil,m.tkMembre 
 FROM membre m LEFT JOIN fonction f ON m.fkFonction = f.idFonction
 LEFT JOIN membre pere ON m.fkPere = pere.idMembre
 LEFT JOIN membre mere ON m.fkMere = mere.idMembre
-LEFT JOIN membre c ON m.fkMere = c.idMembre;
+LEFT JOIN membre c ON m.fkConjoint = c.idMembre;
+
+
+/* SELECT m.idMembre,m.nom,m.prenom,m.postnom,m.telephone,m.dateNaissance,m.email,m.sexe,m.avenue,
+m.quartier,m.commune,m.reference,f.fonction,pere.nom nomPere,pere.prenom prenomPere,mere.nom nomMere,mere.prenom prenomMere,c.nom nomConjoint,c.prenom prenomConjoint,c.tkMembre tkConjoint,m.isBaptise,m.egliseBaptise,m.dateDecede,m.profil,m.tkMembre 
+FROM membre m LEFT JOIN fonction f ON m.fkFonction = f.idFonction
+LEFT JOIN membre pere ON m.fkPere = pere.idMembre
+LEFT JOIN membre mere ON m.fkMere = mere.idMembre
+LEFT JOIN membre c ON m.fkMere = c.idMembre; */
 
 /*View*/

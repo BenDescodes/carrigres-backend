@@ -99,6 +99,17 @@ export const deleteData = (table: string, columns: Array<any>, values: Array<any
         })
     })
 }
+//requette personnel avec les parametre
+export const personalQueryAsync = (query: string, params?: Array<any>) => {
+    return new Promise((resolve, reject) => {
+        connect.query(query, params, (error, results) => {
+            if (error) {
+                return reject(error)
+            }
+            resolve(results)
+        })
+    })
+}
 
 export const checkError = (req: any, params: object) => {
     const schema = Joi.object(params)

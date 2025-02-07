@@ -11,6 +11,7 @@ import {
     cancelTransaction,
     startTransaction,
     commitTransaction,
+    personalQueryAsync,
 } from "../helper/method"
 import { fileCompresse } from "../middleware/multerConfig"
 import randomstring from "randomstring"
@@ -346,7 +347,6 @@ export const updateMembre = async (req: request, res: response) => {
                 const updateBaptise = await updateData("membre", ["isBaptise"], ["tkMembre"], [req.body.baptise, id])
                 if (!updateBaptise) error = true
             }
-            console.log(req.body.fonction)
             if (membre[0].fkFonction != fonction) {
                 const updateFonction = await updateData("membre", ["fkFonction"], ["tkMembre"], [fonction, id])
                 if (!updateFonction) error = true
@@ -434,5 +434,91 @@ export const celibataireMembre = async (req: request, res: response) => {
         return res.status(200).json([])
     } catch (error: any) {
         res.status(400).json({ message: error || "An error occurred" })
+    }
+}
+export const checkMembre = async (req: request, res: response) => {
+    let { nom, prenom, postnom } = req.body
+    const error = checkError(req.body, {
+        nom: Joi.string().min(3).required().messages({ "any.required": "Entrer le champ nom correctement" }),
+        prenom: Joi.string().min(3).required().messages({ "any.required": "Entrer le champ prenom correctement" }),
+        postnom: Joi.string().allow(""),
+        other: Joi.string().allow(""),
+    })
+    if (error?.length) return res.status(400).json({ error })
+    try {
+        const script = "SELECT * FROM membre WHERE nom=? AND prenom=? AND postnom=?"
+        const membresCheck: any = await personalQueryAsync(script, [nom, prenom, postnom])
+        if (membresCheck.length)
+            return res.status(200).json({ message: "Merci ! Vous etês membre", membre: membresCheck[0].tkMembre })
+        else return res.status(400).json({ message: "Erreur vous êtes pas membre" })
+    } catch (error: any) {
+        res.status(400).json({ message: error || "An error occurred" })
+    }
+}
+export const checkOneMembre = async (req: request, res: response) => {
+    const { tkMembre } = req.params
+    if (tkMembre) {
+        const oneMembre: any = await fetchTableColumns("v_membre_all", ["tkMembre"], [tkMembre])
+        const script = "SELECT nom,prenom,tkMembre FROM membre WHERE fkPere = ?"
+        const childrenMembre: any = await personalQueryAsync(script, [oneMembre[0].idMembre])
+        const items = oneMembre[0]
+        const data = {
+            idMembre: items.idMembre,
+            nom: items.nom,
+            prenom: items.prenom,
+            postnom: items.postnom && items.postnom,
+            telephone: items.telephone,
+            dateNaissance: moment(items.dateNaissance).format("LL"),
+            email: items.email,
+            sexe: items.sexe,
+            avenue: items.avenue,
+            quartier: items.quartier,
+            commune: items.commune,
+            fonction: items.fonction,
+            pere: items.nomPere && `${items.nomPere} ${items.prenomPere}`,
+            mere: items.nomMere && `${items.nomMere} ${items.prenomMere}`,
+            conjoint: items.nomConjoint && `${items.nomConjoint} ${items.prenomConjoint}`,
+            tkConjoint: items.tkConjoint && items.tkConjoint,
+            baptise: items.isBaptise ? "Oui" : "Non",
+            egliseBaptise: items.egliseBaptise ? items.egliseBaptise : "Assemblée Chretienne de Carrigres",
+            reference: items.reference,
+            decede: items.idDecede,
+            dateDecede: items.dateDecede,
+            profil: items.profil && items.profil ? `${req.protocol}://${req.get("host")}/src/images/${items.profil}` : null,
+            tkMembre: items.tkMembre,
+            childrenMembre,
+        }
+        return res.status(200).json(data)
+    }
+}
+export const activeMembre = async (req: request, res: response) => {
+    try {
+        const activeMembre: any[] = await fetchTableData("activeMembre")
+        if (activeMembre.length) return res.status(200).json(activeMembre[0])
+        else res.status(400).json({ message: "Pas activer" })
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+export const createActiveMembre = async (req: request, res: response) => {
+    try {
+        const activeMembre: any[] = await fetchTableData("activeMembre")
+        const valueActiveMembre = activeMembre[0].activeMembre
+        const idActive = activeMembre && activeMembre[0].idActive
+        let error: boolean = false
+        let message = valueActiveMembre ? "Fermeture de l'enregistrement" : "Ouverture de l'enregistrement "
+        if (valueActiveMembre || !valueActiveMembre) {
+            const updateActiveMembre = await updateData(
+                "activeMembre",
+                ["activeMembre"],
+                ["idActive"],
+                [!valueActiveMembre, idActive]
+            )
+            if (!updateActiveMembre) error = true
+        }
+        if (error) return res.status(400).json({ message: "Erreur lors de l'activation" })
+        else return res.status(200).json({ message })
+    } catch (error) {
+        return res.status(400).json(error)
     }
 }
