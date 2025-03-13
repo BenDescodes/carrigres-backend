@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const membres_1 = require("../controllers/membres");
+const multerConfig_1 = require("../middleware/multerConfig");
+const uploadFiles = multerConfig_1.upload.fields([{ name: "profil", maxCount: 1 }]);
+const router = express_1.default.Router();
+router.get("/activeMembres", membres_1.activeMembre);
+router.post("/activeMembres", membres_1.createActiveMembre);
+router.get("/", membres_1.fetchAllMembre);
+router.get("/:id", membres_1.fetchOneMembre);
+router.post("/", uploadFiles, membres_1.createMembre);
+router.put("/:id", membres_1.updateMembre);
+router.delete("/:id", membres_1.deleteMembre);
+router.get("/parent/:sexe", membres_1.parentMembre);
+router.get("/celibataire/:sexe", membres_1.celibataireMembre);
+router.post("/checkMembres", membres_1.checkMembre);
+router.get("/checkMembres/:tkMembre", membres_1.checkOneMembre);
+exports.default = router;

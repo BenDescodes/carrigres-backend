@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.contactRouter = exports.dashboardRouter = exports.fonctionRouter = exports.credentials = exports.PredRouter = exports.SermonRouter = exports.MembresRouter = void 0;
+const membres_1 = __importDefault(require("./membres"));
+exports.MembresRouter = membres_1.default;
+const sermons_1 = __importDefault(require("./sermons"));
+exports.SermonRouter = sermons_1.default;
+const predicateurs_1 = __importDefault(require("./predicateurs"));
+exports.PredRouter = predicateurs_1.default;
+const credentials_1 = __importDefault(require("./credentials"));
+exports.credentials = credentials_1.default;
+const fonction_1 = __importDefault(require("./fonction"));
+exports.fonctionRouter = fonction_1.default;
+const dashboard_1 = __importDefault(require("./dashboard"));
+exports.dashboardRouter = dashboard_1.default;
+const contact_1 = __importDefault(require("./contact"));
+exports.contactRouter = contact_1.default;
