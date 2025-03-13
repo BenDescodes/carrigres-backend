@@ -28,6 +28,7 @@ app.use("/api/credentials", credentials)
 app.use("/api/fonctions", fonctionRouter)
 app.use("/api/dashboard", dashboardRouter)
 app.use("/api/contact", contactRouter)
+app.use("/api/contact", contactRouter)
 
 //exporting app
 module.exports = app
