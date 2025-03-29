@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUser = exports.fetchAllRole = exports.fetchOneUsers = exports.fetchAllUsers = exports.login = exports.signup = void 0;
+exports.deleteUser = exports.updateUser = exports.fetchAllRole = exports.fetchOneUsers = exports.fetchAllUsers = exports.login = exports.signup = void 0;
 const joi_1 = __importDefault(require("joi"));
 const method_1 = require("../helper/method");
 const type_1 = require("../types/type");
@@ -35,20 +35,27 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     });
     if (error)
         return res.status(400).json({ message: (_a = error[0]) === null || _a === void 0 ? void 0 : _a.message });
-    if (yield (0, method_1.isFindColumn)("users", ["login", "fkMembre"], [login, membre])) {
-        res.status(400).json({
-            message: "Cet utilisateur existe déjà",
-        });
-        return;
+    try {
+        const findUser = (0, method_1.isFindColumn)("users", ["login", "fkMembre"], [login, membre]);
+        if (!findUser)
+            return res.status(400).json({ message: "Cet utilisateur existe déjà" });
+    }
+    catch (error) {
+        return res.status(400).json({ message: `Erreur ${error.message}` });
     }
     (0, bcrypt_1.hash)(mdp, 10, (err, hash) => __awaiter(void 0, void 0, void 0, function* () {
         if (err)
             return res.status(400).json({ message: "erreur survenu lors du cryptage, veuillez reessayer plutard" });
-        const createUser = yield (0, method_1.createData)("users", ["login", "mdp", "fkROle", "fkMembre"], ["?,?,?,?"], [login, hash, role, membre]);
-        if (createUser)
-            res.status(200).json({ message: "Enregistrement effectuer" });
-        else
-            res.status(400).json({ message: "Erreur survenu lors de l'enregistrement" });
+        try {
+            const createUser = yield (0, method_1.createData)("users", ["login", "mdp", "fkROle", "fkMembre"], ["?,?,?,?"], [login, hash, role, membre]);
+            if (createUser)
+                res.status(200).json({ message: "Enregistrement effectuer" });
+            else
+                res.status(400).json({ message: "Erreur survenu lors de l'enregistrement" });
+        }
+        catch (error) {
+            return res.status(400).json({ message: `Erreur ${error}` });
+        }
         return;
     }));
 });
@@ -76,6 +83,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 login: data.login,
                 profil: data.profil ? `${req.protocol}://${req.get("host")}/src/images/${data.profil}` : null,
                 /* nomComplet: data.nomComplet, */
+                idRole: data.idRole,
                 role: data.role,
             },
             token: (0, jsonwebtoken_1.sign)({ idUser: data.idUsers }, type_1.secret, { expiresIn: "2h" }),
@@ -85,7 +93,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.login = login;
 const fetchAllUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const usersData = yield (0, method_1.fetchTableData)("v_membre_user", "Order by idRole DESC");
+        const usersData = yield (0, method_1.fetchTableData)("v_membre_user", "WHERE login != 'SuperAdmin' Order by idRole DESC");
         if (usersData.length) {
             let allUsers = [];
             usersData.map((items) => {
@@ -158,7 +166,6 @@ const fetchAllRole = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 });
 exports.fetchAllRole = fetchAllRole;
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(req.body);
     const { id } = req.params;
     const { login, role, mdp, confMdp } = req.body;
     const error = (0, method_1.checkError)({ login, role, mdp, confMdp }, {
@@ -204,9 +211,25 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             if (error)
                 return res.status(400).json({ message: "Erreur survenu lors de la mise à jour" });
             else
-                return res.status(200).json({ message: "Modification total réussi" });
+                return res.status(200).json({ message: "Modification réussi" });
         }
     }
     catch (error) { }
 });
 exports.updateUser = updateUser;
+const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params, error = (0, method_1.checkError)(req.params, {
+        id: joi_1.default.string().required(),
+    });
+    if (error === null || error === void 0 ? void 0 : error.length)
+        return res.status(400).json({ error });
+    if (yield (0, method_1.isFindColumn)("users", ["idUsers"], [id])) {
+        if (yield (0, method_1.deleteData)("users", ["idUsers"], [id])) {
+            return res.status(200).json({ message: "Supression reussi" });
+        }
+    }
+    else {
+        return res.status(400).json({ message: "Cet utilisateur n'existe pas" });
+    }
+});
+exports.deleteUser = deleteUser;

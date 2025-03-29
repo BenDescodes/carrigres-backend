@@ -70,7 +70,8 @@ CREATE TABLE IF NOT EXISTS users(
     CONSTRAINT fkUserRole FOREIGN KEY (fkRole) REFERENCES role(idRole) ON UPDATE CASCADE
 )ENGINE = InnoDB CHARACTER SET utf8mb4;
 
-INSERT INTO users(login,mdp,fkrole) VALUES ('Ben','A12345678',1);
+
+INSERT INTO users(login,fkrole) VALUES ('SuperAdmin',1);
 /* --sermon */
 CREATE TABLE IF NOT EXISTS sermon(
     idSermon INT AUTO_INCREMENT PRIMARY KEY,

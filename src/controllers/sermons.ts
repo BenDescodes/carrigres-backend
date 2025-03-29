@@ -2,7 +2,6 @@ import Joi from "joi"
 import { request, response } from "../types/type"
 import { createData, fetchTableData, fetchTableColumns, isFindColumn, checkError, deleteData, updateData } from "../helper/method"
 import randomstring from "randomstring"
-import path from "path"
 import { fileCompresse } from "../middleware/multerConfig"
 import dateFrancais from "../helper/dateConfig"
 import moment from "moment"
@@ -49,6 +48,7 @@ export const fetchAllSermon = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
+
 export const fetchOneSermon = async (req: request, res: response) => {
     const { id } = req.params
     const error = checkError(req.params, {

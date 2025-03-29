@@ -3,6 +3,7 @@ import Joi from "joi"
 import {
     checkError,
     createData,
+    deleteData,
     ErrorMessage,
     fetchTableColumns,
     fetchTableData,
@@ -29,22 +30,27 @@ export const signup = async (req: request, res: response) => {
     })
 
     if (error) return res.status(400).json({ message: error[0]?.message })
-    if (await isFindColumn("users", ["login", "fkMembre"], [login, membre])) {
-        res.status(400).json({
-            message: "Cet utilisateur existe déjà",
-        })
-        return
+    try {
+        const findUser: any = isFindColumn("users", ["login", "fkMembre"], [login, membre])
+        if (!findUser) return res.status(400).json({ message: "Cet utilisateur existe déjà" })
+    } catch (error: any) {
+        return res.status(400).json({ message: `Erreur ${error.message}` })
     }
     hash(mdp, 10, async (err: any, hash: any) => {
         if (err) return res.status(400).json({ message: "erreur survenu lors du cryptage, veuillez reessayer plutard" })
-        const createUser = await createData(
-            "users",
-            ["login", "mdp", "fkROle", "fkMembre"],
-            ["?,?,?,?"],
-            [login, hash, role, membre]
-        )
-        if (createUser) res.status(200).json({ message: "Enregistrement effectuer" })
-        else res.status(400).json({ message: "Erreur survenu lors de l'enregistrement" })
+        try {
+            const createUser = await createData(
+                "users",
+                ["login", "mdp", "fkROle", "fkMembre"],
+                ["?,?,?,?"],
+                [login, hash, role, membre]
+            )
+            if (createUser) res.status(200).json({ message: "Enregistrement effectuer" })
+            else res.status(400).json({ message: "Erreur survenu lors de l'enregistrement" })
+        } catch (error: any) {
+            return res.status(400).json({ message: `Erreur ${error}` })
+        }
+
         return
     })
 }
@@ -70,6 +76,7 @@ export const login = async (req: request, res: response) => {
                 login: data.login,
                 profil: data.profil ? `${req.protocol}://${req.get("host")}/src/images/${data.profil}` : null,
                 /* nomComplet: data.nomComplet, */
+                idRole: data.idRole,
                 role: data.role,
             },
             token: sign({ idUser: data.idUsers }, secret, { expiresIn: "2h" }),
@@ -78,7 +85,7 @@ export const login = async (req: request, res: response) => {
 }
 export const fetchAllUsers = async (req: request, res: response) => {
     try {
-        const usersData: any[] = await fetchTableData("v_membre_user", "Order by idRole DESC")
+        const usersData: any[] = await fetchTableData("v_membre_user", "WHERE login != 'SuperAdmin' Order by idRole DESC")
         if (usersData.length) {
             let allUsers: any[] = []
             usersData.map((items: any) => {
@@ -138,7 +145,6 @@ export const fetchAllRole = async (req: request, res: response) => {
     }
 }
 export const updateUser = async (req: request, res: response) => {
-    console.log(req.body)
     const { id } = req.params
     const { login, role, mdp, confMdp } = req.body
     const error = checkError(
@@ -180,7 +186,21 @@ export const updateUser = async (req: request, res: response) => {
                 return res.status(200).json({ message: "Modification réussi sans le mot de passe" })
             }
             if (error) return res.status(400).json({ message: "Erreur survenu lors de la mise à jour" })
-            else return res.status(200).json({ message: "Modification total réussi" })
+            else return res.status(200).json({ message: "Modification réussi" })
         }
     } catch (error) {}
+}
+export const deleteUser = async (req: request, res: response) => {
+    const { id } = req.params,
+        error = checkError(req.params, {
+            id: Joi.string().required(),
+        })
+    if (error?.length) return res.status(400).json({ error })
+    if (await isFindColumn("users", ["idUsers"], [id])) {
+        if (await deleteData("users", ["idUsers"], [id])) {
+            return res.status(200).json({ message: "Supression reussi" })
+        }
+    } else {
+        return res.status(400).json({ message: "Cet utilisateur n'existe pas" })
+    }
 }

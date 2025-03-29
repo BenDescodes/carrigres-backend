@@ -12,5 +12,6 @@ router.get("/roles", credentials_1.fetchAllRole);
 router.get("/users", credentials_1.fetchAllUsers);
 router.get("/users/:id", credentials_1.fetchOneUsers);
 router.put("/users/:id", credentials_1.updateUser);
+router.delete("/users/:id", credentials_1.deleteUser);
 /* route.get('/', auth, findUser) */
 exports.default = router;
