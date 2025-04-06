@@ -1,6 +1,15 @@
 import Joi from "joi"
 import { request, response } from "../types/type"
-import { createData, fetchTableData, fetchTableColumns, isFindColumn, checkError, deleteData, updateData } from "../helper/method"
+import {
+    createData,
+    fetchTableData,
+    fetchTableColumns,
+    isFindColumn,
+    checkError,
+    deleteData,
+    updateData,
+    personalQueryAsync,
+} from "../helper/method"
 import randomstring from "randomstring"
 import { fileCompresse } from "../middleware/multerConfig"
 import dateFrancais from "../helper/dateConfig"
@@ -9,30 +18,25 @@ moment.locale("fr")
 
 export const fetchAllSermon = async (req: request, res: response) => {
     try {
-        const sermon: any[] = await fetchTableData("sermon", " ORDER BY dateSermon DESC")
+        const script =
+            "SELECT * FROM V_sermon_all WHERE nom!=? OR nom is null AND prenom!=? OR prenom is null ORDER BY dateSermon DESC"
+        const sermon: any[] = await personalQueryAsync(script, ["Kapanga", "Theophile"])
+        /* const sermon: any[] = await fetchTableData("V_sermon_all", " ORDER BY dateSermon DESC") */
         if (sermon.length) {
-            let allSermon
             const fullSermons = await Promise.all(
                 sermon.map(async (items: any) => {
-                    const [dataM, dataP]: [any[], any[]] = await Promise.all([
-                        fetchTableColumns("membre", ["tkMembre"], [items.fkPredicateur]),
-                        fetchTableColumns("predicateur", ["tkPred"], [items.fkPredicateur]),
-                    ])
+                    const predicateur: string = items.nomPredicateur
+                        ? `${items.nomPredicateur} ${items.prenomPredicateur}`
+                        : `${items.nom} ${items.prenom}`
 
-                    const predicateur: string | null = dataM.length
-                        ? `${dataM[0].nom} ${dataM[0].prenom}`
-                        : dataP.length
-                        ? `${dataP[0].prenom} ${dataP[0].nom}`
-                        : null
-
-                    const eglise: string = dataP.length ? dataP[0].eglise : "Assemblée Chrétienne de Carrigres"
+                    const eglise: string = items.eglise ? items.eglise : "Assemblée Chrétienne de Carrigres"
 
                     return {
                         id: items.idSermon,
                         theme: items.theme,
                         passage: items.passage,
                         dateSermon: dateFrancais(items.dateSermon),
-                        titre: dataP[0].titre,
+                        titre: items.titre,
                         predicateur: predicateur,
                         eglise: eglise,
                         lienFacebook: items.lienFacebook,
@@ -96,6 +100,43 @@ export const fetchOneSermon = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
+
+export const fetchAllSermonPasteur = async (req: request, res: response) => {
+    try {
+        const sermon: any[] = await fetchTableColumns("V_sermon_all", ["nom", "prenom"], ["Kapanga", "Theophile"])
+        if (sermon.length) {
+            const fullSermons = await Promise.all(
+                sermon.map(async (items: any) => {
+                    const predicateur: string = items.nomPredicateur
+                        ? `${items.nomPredicateur} ${items.prenomPredicateur}`
+                        : `${items.nom} ${items.prenom}`
+
+                    const eglise: string = items.eglise ? items.eglise : "Assemblée Chrétienne de Carrigres"
+
+                    return {
+                        id: items.idSermon,
+                        theme: items.theme,
+                        passage: items.passage,
+                        dateSermon: dateFrancais(items.dateSermon),
+                        titre: "Pasteur",
+                        predicateur: predicateur,
+                        eglise: eglise,
+                        lienFacebook: items.lienFacebook,
+                        lienYoutube: items.lienYoutube,
+                        lienAudio: items.lienAudio,
+                        vue: items.nbrVue,
+                    }
+                })
+            )
+            return res.status(200).json(fullSermons)
+        } else return []
+    } catch (error) {
+        return res.status(400).json(error)
+    }
+}
+
+export const fetchPasteurOneSermon = async (req: request, res: response) => {}
+
 export const createSermon = async (req: request, res: response) => {
     const { theme, passage, date, lienFacebook, lienYoutube, lienAudio, predicateur } = req.body,
         token: string = randomstring.generate(6),

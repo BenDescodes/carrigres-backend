@@ -116,6 +116,9 @@ LEFT JOIN membre pere ON m.fkPere = pere.idMembre
 LEFT JOIN membre mere ON m.fkMere = mere.idMembre
 LEFT JOIN membre c ON m.fkConjoint = c.idMembre;
 
+CREATE OR REPLACE VIEW V_sermon_all AS SELECT idSermon,theme, passage,dateSermon, lienFacebook,lienYoutube,lienAudio,nbrVue, p.titre, p.nom nomPredicateur, p.prenom prenomPredicateur, p.eglise,m.tkMembre, m.nom, m.prenom from sermon 
+LEFT JOIN predicateur p ON fkPredicateur = p.tkPred
+LEFT JOIN membre m on fkPredicateur = m.tkMembre;
 
 /* SELECT m.idMembre,m.nom,m.prenom,m.postnom,m.telephone,m.dateNaissance,m.email,m.sexe,m.avenue,
 m.quartier,m.commune,m.reference,f.fonction,pere.nom nomPere,pere.prenom prenomPere,mere.nom nomMere,mere.prenom prenomMere,c.nom nomConjoint,c.prenom prenomConjoint,c.tkMembre tkConjoint,m.isBaptise,m.egliseBaptise,m.dateDecede,m.profil,m.tkMembre 

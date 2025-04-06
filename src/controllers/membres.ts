@@ -17,6 +17,7 @@ import { fileCompresse } from "../middleware/multerConfig"
 import randomstring from "randomstring"
 import path from "path"
 import moment from "moment"
+import fs from "fs"
 moment.locale("fr")
 
 export const fetchAllMembre = async (req: request, res: response) => {
@@ -382,6 +383,32 @@ export const updateMembre = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
+export const updateProfilMembre = async (req: request, res: response) => {
+    const { id } = req.params
+    let { profil } = req.files,
+        file: any = profil ? profil[0].filename : null,
+        extension: any = file ? path.extname(file) : null
+    if (file) fileCompresse(extension, profil[0])
+    try {
+        const membre: any[] = await fetchTableColumns("membre", ["tkMembre"], [id])
+        if (membre.length) {
+            //supprimer l'image pour laisser seulement le nouveau
+            const updateProfilMembre = await updateData("membre", ["profil"], ["tkMembre"], [file, id])
+            if (updateProfilMembre) return res.status(200).json({ message: "Modification réussi" })
+            if (membre[0].profil) {
+                const filePath = path.join(path.resolve(__dirname, ".."), "images", membre[0].profil)
+                try {
+                    fs.unlinkSync(filePath)
+                    console.log("Fichier supprimé avec succès !")
+                } catch (err) {
+                    console.error("Erreur lors de la suppression du fichier :", err)
+                }
+            } else return res.status(400).json({ message: "Erreur survenu lors de la mise à jour" })
+        }
+    } catch (error) {
+        return res.status(400).json(error)
+    }
+}
 export const deleteMembre = async (req: request, res: response) => {
     const { id } = req.params,
         error = checkError(req.params, {
@@ -389,8 +416,19 @@ export const deleteMembre = async (req: request, res: response) => {
         })
     if (error?.length) return res.status(400).json({ error })
     try {
-        if (await isFindColumn("membre", ["tkMembres"], [id])) {
-            if (await deleteData("membre", ["tkMembres"], [id])) {
+        if (await isFindColumn("membre", ["tkMembre"], [id])) {
+            const membres: any[] = await fetchTableColumns("membre", ["tkMembre"], [id])
+            const filePath = path.join(path.resolve(__dirname, ".."), "images", membres[0].profil)
+            console.log(filePath)
+            if (membres[0].profil) {
+                try {
+                    fs.unlinkSync(filePath)
+                    console.log("Fichier supprimé avec succès !")
+                } catch (err) {
+                    console.error("Erreur lors de la suppression du fichier :", err)
+                }
+            }
+            if (await deleteData("membre", ["tkMembre"], [id])) {
                 return res.status(200).json({ message: "Supression reussi" })
             }
         } else {
