@@ -16,14 +16,15 @@ exports.upload = exports.fileCompresse = void 0;
 const multer_1 = __importDefault(require("multer"));
 const sharp_1 = __importDefault(require("sharp"));
 const fileCompresse = (extension, file) => __awaiter(void 0, void 0, void 0, function* () {
-    if (extension == '.png') {
+    if (extension == ".png") {
         yield (0, sharp_1.default)(file.path)
-            .png({ compressionLevel: 9, adaptiveFiltering: true, force: true }).withMetadata()
+            .png({ compressionLevel: 9, adaptiveFiltering: true, force: true })
+            .withMetadata()
             .toFile("./src/images/" + file.filename, (err, info) => {
             if (err)
                 console.log(err);
             else
-                console.log('Upload reussi');
+                console.log("Upload reussi");
         });
     }
     else {
@@ -34,26 +35,26 @@ const fileCompresse = (extension, file) => __awaiter(void 0, void 0, void 0, fun
             if (err)
                 console.log(err);
             else
-                console.log('Upload reussi');
+                console.log("Upload reussi");
         });
     }
 });
 exports.fileCompresse = fileCompresse;
 const MIME_TYPES = {
-    'image/jpg': 'jpg',
-    'image/jpeg': 'jpg',
-    'image/png': 'png'
+    "image/jpg": "jpg",
+    "image/jpeg": "jpg",
+    "image/png": "png",
 };
 const storage = multer_1.default.diskStorage({
     /* destination: (req, file, callback) => { callback(null, "src\\images"); }, */
     filename: (req, file, callback) => {
-        if (file.mimetype.startsWith('image')) {
+        if (file.mimetype.startsWith("image")) {
             const extension = MIME_TYPES[file.mimetype];
-            callback(null, Date.now() + '.' + extension);
+            callback(null, Date.now() + "." + extension);
         }
         else {
             callback("Upload une image", false);
         }
-    }
+    },
 });
 exports.upload = (0, multer_1.default)({ storage });

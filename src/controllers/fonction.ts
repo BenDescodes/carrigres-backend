@@ -1,7 +1,7 @@
-import { fetchTableColumns, fetchTableData } from "../helper/method"
-import { request, response } from "../types/type"
+import { fetchTableData } from "../helper/method"
+import { Request, Response } from "express"
 
-export const fetchAllFonction = async (req: request, res: response) => {
+export const fetchAllFonction = async (req: Request, res: Response) => {
     try {
         const fonctions: any[] = await fetchTableData("fonction", "Order by idFonction")
         if (fonctions.length) {

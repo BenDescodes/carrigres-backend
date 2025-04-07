@@ -1,8 +1,15 @@
-import { NextFunction, Request, Response } from "express-serve-static-core"
-import QueryString from "qs"
+import { NextFunction } from "express-serve-static-core"
 
-export type request = Request<{}, any, any, QueryString.ParsedQs, Record<string, any>>
-export type response = Response<any, Record<string, any>, number>
-export type next = NextFunction 
+export type next = NextFunction
 
-export const secret = "ooikwe2pBevO2arVAJoadf7$2b$10$YXAin722W8mlpbpDaCsZ";
+export const secret = "ooikwe2pBevO2arVAJoadf7$2b$10$YXAin722W8mlpbpDaCsZ"
+
+export type PredicateurType = {
+    id: string
+    titre: string
+    nom: string
+    prenom: string
+    tel: string
+    eglise: string
+    tkPred: string
+}

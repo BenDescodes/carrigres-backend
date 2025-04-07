@@ -10,11 +10,12 @@ import {
     isFindColumn,
     updateData,
 } from "../helper/method"
-import { request, response, secret } from "../types/type"
+import { secret } from "../types/type"
+import { Request, Response } from "express"
 import { compare, hash } from "bcrypt"
 import { sign } from "jsonwebtoken"
 
-export const signup = async (req: request, res: response) => {
+export const signup = async (req: Request, res: Response) => {
     const { login, mdp, role, membre, confMdp } = req.body
     const error = checkError(req.body, {
         login: Joi.string().required().messages({ "any.only": "Le login  est obligatoire" }),
@@ -54,7 +55,7 @@ export const signup = async (req: request, res: response) => {
         return
     })
 }
-export const login = async (req: request, res: response) => {
+export const login = async (req: Request, res: Response) => {
     const { login, mdp } = req.body,
         error = checkError(req.body, {
             login: Joi.string().required(),
@@ -65,9 +66,9 @@ export const login = async (req: request, res: response) => {
     const user: any = await fetchTableColumns("v_membre_user", ["login"], [login])
     if (!user[0]) return res.status(403).json({ code: 13, message: ErrorMessage.erreurMdp })
 
-    compare(mdp, user[0]?.mdp, (err: any, response: boolean) => {
+    compare(mdp, user[0]?.mdp, (err: any, Response: boolean) => {
         if (err) return res.status(400).json({ error: 403, message: ErrorMessage.erreurInscription })
-        if (!response) return res.status(403).json({ code: 403, message: ErrorMessage.erreurMdp })
+        if (!Response) return res.status(403).json({ code: 403, message: ErrorMessage.erreurMdp })
         const data = user[0]
 
         res.status(200).json({
@@ -83,7 +84,7 @@ export const login = async (req: request, res: response) => {
         })
     })
 }
-export const fetchAllUsers = async (req: request, res: response) => {
+export const fetchAllUsers = async (req: Request, res: Response) => {
     try {
         const usersData: any[] = await fetchTableData("v_membre_user", "WHERE login != 'SuperAdmin' Order by idRole DESC")
         if (usersData.length) {
@@ -105,7 +106,7 @@ export const fetchAllUsers = async (req: request, res: response) => {
         res.status(400).json({ message: error })
     }
 }
-export const fetchOneUsers = async (req: request, res: response) => {
+export const fetchOneUsers = async (req: Request, res: Response) => {
     const { id } = req.params
     const error = checkError(req.params, {
         id: Joi.required(),
@@ -128,7 +129,7 @@ export const fetchOneUsers = async (req: request, res: response) => {
         res.status(400).json({ message: error })
     }
 }
-export const fetchAllRole = async (req: request, res: response) => {
+export const fetchAllRole = async (req: Request, res: Response) => {
     try {
         const roleData: any[] = await fetchTableData("role", "Order by idRole DESC")
         if (roleData.length) {
@@ -144,7 +145,7 @@ export const fetchAllRole = async (req: request, res: response) => {
         res.status(400).json({ message: error })
     }
 }
-export const updateUser = async (req: request, res: response) => {
+export const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params
     const { login, role, mdp, confMdp } = req.body
     const error = checkError(
@@ -190,7 +191,7 @@ export const updateUser = async (req: request, res: response) => {
         }
     } catch (error) {}
 }
-export const deleteUser = async (req: request, res: response) => {
+export const deleteUser = async (req: Request, res: Response) => {
     const { id } = req.params,
         error = checkError(req.params, {
             id: Joi.string().required(),

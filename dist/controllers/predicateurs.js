@@ -18,10 +18,10 @@ const method_1 = require("../helper/method");
 const randomstring_1 = __importDefault(require("randomstring"));
 const fetchAllPred = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const membres = yield (0, method_1.fetchTableData)("predicateur", "ORDER by idPred DESC");
-        if (membres.length) {
+        const predicateur = yield (0, method_1.fetchTableData)("predicateur", "ORDER by idPred DESC");
+        if (predicateur.length) {
             let allPred = [];
-            membres.map((items) => {
+            predicateur.map((items) => {
                 let data = {
                     id: items.idPred,
                     titre: items.titre,

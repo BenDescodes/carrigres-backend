@@ -22,7 +22,12 @@ export const isFindColumn = (table: string, fields: Array<any>, values: Array<an
     })
 }
 
-export const fetchTableColumns = (table: string, fields: Array<any>, values: Array<any>, clause: string = "") => {
+export const fetchTableColumns = <T>(
+    table: string,
+    fields: Array<any>,
+    values: Array<any>,
+    clause: string = ""
+): Promise<T[]> => {
     return new Promise((resolve, reject) => {
         let script = "SELECT *  FROM " + table + " WHERE " + fetchTableFields(fields) + " " + clause
         connect.query(script, values, (error, res: Array<any>) => {
@@ -35,10 +40,10 @@ export const fetchTableColumns = (table: string, fields: Array<any>, values: Arr
     })
 }
 
-export const countTableData = (table: string) => {
+export const countTableData = <T>(table: string): Promise<T[]> => {
     return new Promise((resolve, reject) => {
         let script = "SELECT COUNT(*) count  FROM " + table
-        connect.query(script, (error, res: Array<any>) => {
+        connect.query(script, (error: any, res: Array<any>) => {
             if (error) {
                 reject({ error: error })
                 return
@@ -48,10 +53,10 @@ export const countTableData = (table: string) => {
     })
 }
 
-export const fetchTableData = (table: string, clause: string = "") => {
+export const fetchTableData = <T>(table: string, clause: string = ""): Promise<T[]> => {
     return new Promise((resolve, reject) => {
-        let script = "SELECT *  FROM " + table + " " + clause
-        connect.query(script, (error, res: Array<any>) => {
+        const script = "SELECT * FROM " + table + " " + clause
+        connect.query(script, (error: any, res: Array<T>) => {
             if (error) {
                 reject({ error: error })
                 return
@@ -100,7 +105,7 @@ export const deleteData = (table: string, columns: Array<any>, values: Array<any
     })
 }
 //requette personnel avec les parametre
-export const personalQueryAsync = (query: string, params?: Array<any>) => {
+export const personalQueryAsync = <T>(query: string, params?: Array<any>): Promise<T[]> => {
     return new Promise((resolve, reject) => {
         connect.query(query, params, (error, results) => {
             if (error) {

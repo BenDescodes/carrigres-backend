@@ -1,9 +1,10 @@
 import Joi from "joi"
 import { checkError, fetchTableColumns } from "../helper/method"
-import { request, response } from "../types/type"
+import { Request, Response } from "express"
+
 import { getMailOption, transporter } from "../helper/sendMail"
 
-export const suggestion = async (req: request, res: response) => {
+export const suggestion = async (req: Request, res: Response) => {
     const { nom, prenom, message } = req.body
     const error = checkError(req.body, {
         nom: Joi.string().required().messages({ "any.required": "Entrer le champ nom correctement" }),

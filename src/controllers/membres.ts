@@ -1,5 +1,5 @@
 import Joi from "joi"
-import { request, response } from "../types/type"
+import { Request, Response } from "express"
 import {
     createData,
     fetchTableData,
@@ -20,9 +20,15 @@ import moment from "moment"
 import fs from "fs"
 moment.locale("fr")
 
-export const fetchAllMembre = async (req: request, res: response) => {
+interface MulterRequest extends Request {
+    files: {
+        profil?: Express.Multer.File[] // le nom "profil" correspond au champ input
+    }
+}
+
+export const fetchAllMembre = async (req: Request, res: Response) => {
     try {
-        const membres: any[] = await fetchTableData("v_membre_all", "ORDER by idMembre")
+        const membres: any[] = await fetchTableData("v_membre_all", "ORDER by idMembre DESC")
         if (membres) {
             let allMembre: any[] = []
             membres.map((items: any) => {
@@ -58,14 +64,14 @@ export const fetchAllMembre = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
-export const fetchOneMembre = async (req: request, res: response) => {
+export const fetchOneMembre = async (req: Request, res: Response) => {
     const { id } = req.params,
         error = checkError(req.params, {
             id: Joi.required(),
         })
     if (error?.length) return res.status(400).json({ error })
     try {
-        const membres: Array = await fetchTableColumns("membre", ["tkMembre"], [id])
+        const membres: any[] = await fetchTableColumns("membre", ["tkMembre"], [id])
         membres.map((items: any) => {
             const data = {
                 idMembre: items.idMembre,
@@ -97,7 +103,7 @@ export const fetchOneMembre = async (req: request, res: response) => {
     }
 }
 
-export const createMembre = async (req: request, res: response) => {
+export const createMembre = async (req: MulterRequest, res: Response) => {
     let {
             nom,
             prenom,
@@ -122,7 +128,7 @@ export const createMembre = async (req: request, res: response) => {
         file: any = profil ? profil[0].filename : null,
         extension: any = file ? path.extname(file) : null,
         token: string = randomstring.generate(6),
-        error = checkError(req.body, {
+        error: any = checkError(req.body, {
             nom: Joi.string().min(3).message("Le nom doit avoir plus de 3 caracteres").required(),
             prenom: Joi.string().min(3).message("Le prenom doit avoir plus de 3 caracteres"),
             postnom: Joi.string().allow(""),
@@ -164,8 +170,10 @@ export const createMembre = async (req: request, res: response) => {
         if (
             !(await isFindColumn("membre", ["nom", "prenom", "postnom", "dateNaissance"], [nom, prenom, postnom, dateNaissance]))
         ) {
-            if (file) fileCompresse(extension, profil[0])
-            const membre = await createData(
+            if (file && profil?.[0]) {
+                fileCompresse(extension, profil[0])
+            }
+            const membre: any = await createData(
                 "membre",
                 [
                     "nom",
@@ -229,7 +237,7 @@ export const createMembre = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
-export const updateMembre = async (req: request, res: response) => {
+export const updateMembre = async (req: Request, res: Response) => {
     const { id } = req.params
     let {
         nom,
@@ -383,12 +391,14 @@ export const updateMembre = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
-export const updateProfilMembre = async (req: request, res: response) => {
+export const updateProfilMembre = async (req: MulterRequest, res: Response) => {
     const { id } = req.params
     let { profil } = req.files,
         file: any = profil ? profil[0].filename : null,
         extension: any = file ? path.extname(file) : null
-    if (file) fileCompresse(extension, profil[0])
+    if (file && profil?.[0]) {
+        fileCompresse(extension, profil[0])
+    }
     try {
         const membre: any[] = await fetchTableColumns("membre", ["tkMembre"], [id])
         if (membre.length) {
@@ -409,7 +419,7 @@ export const updateProfilMembre = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
-export const deleteMembre = async (req: request, res: response) => {
+export const deleteMembre = async (req: Request, res: Response) => {
     const { id } = req.params,
         error = checkError(req.params, {
             id: Joi.string().required(),
@@ -439,7 +449,7 @@ export const deleteMembre = async (req: request, res: response) => {
     }
 }
 //recuperer les données par sexe pour remplir le select de Pere(M) et de Mere(M)
-export const parentMembre = async (req: request, res: response) => {
+export const parentMembre = async (req: Request, res: Response) => {
     const { sexe } = req.params
     try {
         const parent: any[] = await fetchTableColumns("membre", ["sexe"], [sexe])
@@ -457,7 +467,7 @@ export const parentMembre = async (req: request, res: response) => {
     }
 }
 //api pour afficher le marie et le celibataire
-export const celibataireMembre = async (req: request, res: response) => {
+export const celibataireMembre = async (req: Request, res: Response) => {
     const { sexe } = req.params
     try {
         const celibataire: any[] = await fetchTableColumns("membre", ["sexe"], [sexe], "AND fkConjoint IS NULL")
@@ -474,7 +484,7 @@ export const celibataireMembre = async (req: request, res: response) => {
         res.status(400).json({ message: error || "An error occurred" })
     }
 }
-export const checkMembre = async (req: request, res: response) => {
+export const checkMembre = async (req: Request, res: Response) => {
     let { nom, prenom, postnom } = req.body
     const error = checkError(req.body, {
         nom: Joi.string().min(3).required().messages({ "any.required": "Entrer le champ nom correctement" }),
@@ -493,7 +503,7 @@ export const checkMembre = async (req: request, res: response) => {
         res.status(400).json({ message: error || "An error occurred" })
     }
 }
-export const checkOneMembre = async (req: request, res: response) => {
+export const checkOneMembre = async (req: Request, res: Response) => {
     const { tkMembre } = req.params
     if (tkMembre) {
         const oneMembre: any = await fetchTableColumns("v_membre_all", ["tkMembre"], [tkMembre])
@@ -529,7 +539,7 @@ export const checkOneMembre = async (req: request, res: response) => {
         return res.status(200).json(data)
     }
 }
-export const activeMembre = async (req: request, res: response) => {
+export const activeMembre = async (req: Request, res: Response) => {
     try {
         const activeMembre: any[] = await fetchTableData("activeMembre")
         if (activeMembre.length) return res.status(200).json(activeMembre[0])
@@ -538,7 +548,7 @@ export const activeMembre = async (req: request, res: response) => {
         res.status(400).json(error)
     }
 }
-export const createActiveMembre = async (req: request, res: response) => {
+export const createActiveMembre = async (req: Request, res: Response) => {
     try {
         const activeMembre: any[] = await fetchTableData("activeMembre")
         const valueActiveMembre = activeMembre[0].activeMembre

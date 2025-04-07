@@ -14,6 +14,7 @@ router.get("/", membres_1.fetchAllMembre);
 router.get("/:id", membres_1.fetchOneMembre);
 router.post("/", uploadFiles, membres_1.createMembre);
 router.put("/:id", membres_1.updateMembre);
+router.put("/profil/:id", uploadFiles, membres_1.updateProfilMembre);
 router.delete("/:id", membres_1.deleteMembre);
 router.get("/parent/:sexe", membres_1.parentMembre);
 router.get("/celibataire/:sexe", membres_1.celibataireMembre);

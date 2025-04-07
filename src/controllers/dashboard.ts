@@ -1,7 +1,7 @@
-import { countTableData, fetchTableData, isFindColumn } from "../helper/method"
-import { request, response } from "../types/type"
+import { countTableData } from "../helper/method"
+import { Request, Response } from "express"
 
-export const dashboard = async (req: request, res: response) => {
+export const dashboard = async (req: Request, res: Response) => {
     try {
         const membre: any[] = await countTableData("membre")
         const predicateur: any[] = await countTableData("predicateur")

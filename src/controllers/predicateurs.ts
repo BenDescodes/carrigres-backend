@@ -1,14 +1,15 @@
 import Joi from "joi"
-import { request, response } from "../types/type"
+import { Request, Response } from "express"
 import { createData, fetchTableData, fetchTableColumns, isFindColumn, checkError, deleteData, updateData } from "../helper/method"
 import randomstring from "randomstring"
+import { PredicateurType } from "../types/type"
 
-export const fetchAllPred = async (req: request, res: response) => {
+export const fetchAllPred = async (req: Request, res: Response) => {
     try {
-        const membres: Array = await fetchTableData("predicateur", "ORDER by idPred DESC")
-        if (membres.length) {
-            let allPred: Array = []
-            membres.map((items: any) => {
+        const predicateur: PredicateurType[] = await fetchTableData<PredicateurType>("predicateur", "ORDER by idPred DESC")
+        if (predicateur.length) {
+            let allPred: any = []
+            predicateur.map((items: any) => {
                 let data = {
                     id: items.idPred,
                     titre: items.titre,
@@ -27,7 +28,7 @@ export const fetchAllPred = async (req: request, res: response) => {
     }
 }
 
-export const fetchOnePred = async (req: request, res: response) => {
+export const fetchOnePred = async (req: Request, res: Response) => {
     const { id } = req.params
     const error = checkError(req.params, {
         id: Joi.required(),
@@ -54,7 +55,7 @@ export const fetchOnePred = async (req: request, res: response) => {
     }
 }
 
-export const createPred = async (req: request, res: response) => {
+export const createPred = async (req: Request, res: Response) => {
     const { nom, prenom, eglise, titre, tel } = req.body,
         token: string = randomstring.generate(6),
         error = checkError(req.body, {
@@ -74,7 +75,7 @@ export const createPred = async (req: request, res: response) => {
     if (error?.length) return res.status(400).json(error)
     try {
         if (!(await isFindColumn("predicateur", ["nom", "prenom", "eglise"], [nom, prenom, eglise]))) {
-            const pred: any[] = await createData(
+            const pred = await createData(
                 "predicateur",
                 ["titre", "nom", "prenom", "eglise", "tkPred", "tel"],
                 ["?", "?", "?", "?", "?", "?"],
@@ -89,7 +90,7 @@ export const createPred = async (req: request, res: response) => {
     }
 }
 
-export const updatePred = async (req: request, res: response) => {
+export const updatePred = async (req: Request, res: Response) => {
     const { id } = req.params,
         { nom, prenom, eglise, titre, tel } = req.body,
         error = checkError(req.body, {
@@ -103,7 +104,7 @@ export const updatePred = async (req: request, res: response) => {
         })
     if (error?.length) return res.status(400).json({ error })
     try {
-        const pred: Array = await fetchTableColumns("predicateur", ["tkPred"], [id])
+        const pred: any[] = await fetchTableColumns("predicateur", ["tkPred"], [id])
         let error: boolean = false
         if (pred.length) {
             if (pred[0].titre != titre) {
@@ -133,7 +134,7 @@ export const updatePred = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
-export const deletePred = async (req: request, res: response) => {
+export const deletePred = async (req: Request, res: Response) => {
     const { id } = req.params,
         error = checkError(req.params, {
             id: Joi.string().required(),

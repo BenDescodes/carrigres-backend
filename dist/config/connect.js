@@ -4,11 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mysql_1 = __importDefault(require("mysql"));
-const host = "localhost", 
-/* username = "root",
-database = "carrigresWebsite",
-password = "admin1234" */
-username = "c2503752c_adminWeb", database = "c2503752c_carrigresWebsite", password = "AdminWeb207";
+const host = "localhost", username = "root", database = "carrigresWebsite", password = "admin1234";
+/* username = "c2503752c_adminWeb",
+    database = "c2503752c_carrigresWebsite",
+    password = "AdminWeb207" */
 const config = {
     host: host,
     user: username,

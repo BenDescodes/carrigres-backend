@@ -12,13 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createActiveMembre = exports.activeMembre = exports.checkOneMembre = exports.checkMembre = exports.celibataireMembre = exports.parentMembre = exports.deleteMembre = exports.updateMembre = exports.createMembre = exports.fetchOneMembre = exports.fetchAllMembre = void 0;
+exports.createActiveMembre = exports.activeMembre = exports.checkOneMembre = exports.checkMembre = exports.celibataireMembre = exports.parentMembre = exports.deleteMembre = exports.updateProfilMembre = exports.updateMembre = exports.createMembre = exports.fetchOneMembre = exports.fetchAllMembre = void 0;
 const joi_1 = __importDefault(require("joi"));
 const method_1 = require("../helper/method");
 const multerConfig_1 = require("../middleware/multerConfig");
 const randomstring_1 = __importDefault(require("randomstring"));
 const path_1 = __importDefault(require("path"));
 const moment_1 = __importDefault(require("moment"));
+const fs_1 = __importDefault(require("fs"));
 moment_1.default.locale("fr");
 const fetchAllMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -358,6 +359,37 @@ const updateMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.updateMembre = updateMembre;
+const updateProfilMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    let { profil } = req.files, file = profil ? profil[0].filename : null, extension = file ? path_1.default.extname(file) : null;
+    if (file)
+        (0, multerConfig_1.fileCompresse)(extension, profil[0]);
+    try {
+        const membre = yield (0, method_1.fetchTableColumns)("membre", ["tkMembre"], [id]);
+        if (membre.length) {
+            //supprimer l'image pour laisser seulement le nouveau
+            const updateProfilMembre = yield (0, method_1.updateData)("membre", ["profil"], ["tkMembre"], [file, id]);
+            if (updateProfilMembre)
+                return res.status(200).json({ message: "Modification réussi" });
+            if (membre[0].profil) {
+                const filePath = path_1.default.join(path_1.default.resolve(__dirname, ".."), "images", membre[0].profil);
+                try {
+                    fs_1.default.unlinkSync(filePath);
+                    console.log("Fichier supprimé avec succès !");
+                }
+                catch (err) {
+                    console.error("Erreur lors de la suppression du fichier :", err);
+                }
+            }
+            else
+                return res.status(400).json({ message: "Erreur survenu lors de la mise à jour" });
+        }
+    }
+    catch (error) {
+        return res.status(400).json(error);
+    }
+});
+exports.updateProfilMembre = updateProfilMembre;
 const deleteMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params, error = (0, method_1.checkError)(req.params, {
         id: joi_1.default.string().required(),
@@ -365,8 +397,20 @@ const deleteMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     if (error === null || error === void 0 ? void 0 : error.length)
         return res.status(400).json({ error });
     try {
-        if (yield (0, method_1.isFindColumn)("membre", ["tkMembres"], [id])) {
-            if (yield (0, method_1.deleteData)("membre", ["tkMembres"], [id])) {
+        if (yield (0, method_1.isFindColumn)("membre", ["tkMembre"], [id])) {
+            const membres = yield (0, method_1.fetchTableColumns)("membre", ["tkMembre"], [id]);
+            const filePath = path_1.default.join(path_1.default.resolve(__dirname, ".."), "images", membres[0].profil);
+            console.log(filePath);
+            if (membres[0].profil) {
+                try {
+                    fs_1.default.unlinkSync(filePath);
+                    console.log("Fichier supprimé avec succès !");
+                }
+                catch (err) {
+                    console.error("Erreur lors de la suppression du fichier :", err);
+                }
+            }
+            if (yield (0, method_1.deleteData)("membre", ["tkMembre"], [id])) {
                 return res.status(200).json({ message: "Supression reussi" });
             }
         }

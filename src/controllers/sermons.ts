@@ -1,5 +1,5 @@
 import Joi from "joi"
-import { request, response } from "../types/type"
+import { Request, Response } from "express"
 import {
     createData,
     fetchTableData,
@@ -16,12 +16,11 @@ import dateFrancais from "../helper/dateConfig"
 import moment from "moment"
 moment.locale("fr")
 
-export const fetchAllSermon = async (req: request, res: response) => {
+export const fetchAllSermon = async (req: Request, res: Response) => {
     try {
         const script =
             "SELECT * FROM V_sermon_all WHERE nom!=? OR nom is null AND prenom!=? OR prenom is null ORDER BY dateSermon DESC"
         const sermon: any[] = await personalQueryAsync(script, ["Kapanga", "Theophile"])
-        /* const sermon: any[] = await fetchTableData("V_sermon_all", " ORDER BY dateSermon DESC") */
         if (sermon.length) {
             const fullSermons = await Promise.all(
                 sermon.map(async (items: any) => {
@@ -53,7 +52,7 @@ export const fetchAllSermon = async (req: request, res: response) => {
     }
 }
 
-export const fetchOneSermon = async (req: request, res: response) => {
+export const fetchOneSermon = async (req: Request, res: Response) => {
     const { id } = req.params
     const error = checkError(req.params, {
         id: Joi.required(),
@@ -101,7 +100,7 @@ export const fetchOneSermon = async (req: request, res: response) => {
     }
 }
 
-export const fetchAllSermonPasteur = async (req: request, res: response) => {
+export const fetchAllSermonPasteur = async (req: Request, res: Response) => {
     try {
         const sermon: any[] = await fetchTableColumns("V_sermon_all", ["nom", "prenom"], ["Kapanga", "Theophile"])
         if (sermon.length) {
@@ -135,9 +134,9 @@ export const fetchAllSermonPasteur = async (req: request, res: response) => {
     }
 }
 
-export const fetchPasteurOneSermon = async (req: request, res: response) => {}
+export const fetchPasteurOneSermon = async (req: Request, res: Response) => {}
 
-export const createSermon = async (req: request, res: response) => {
+export const createSermon = async (req: Request, res: Response) => {
     const { theme, passage, date, lienFacebook, lienYoutube, lienAudio, predicateur } = req.body,
         token: string = randomstring.generate(6),
         error = checkError(req.body, {
@@ -152,8 +151,8 @@ export const createSermon = async (req: request, res: response) => {
     if (error?.length) return res.status(400).json(error)
     try {
         if (!(await isFindColumn("sermon", ["theme", "passage", "dateSermon"], [theme, passage, date]))) {
-            const dataMembre = await fetchTableColumns("membre", ["tkMembre"], [predicateur])
-            const dataPredicateur = await fetchTableColumns("predicateur", ["tkPred"], [predicateur])
+            const dataMembre: any[] = await fetchTableColumns("membre", ["tkMembre"], [predicateur])
+            const dataPredicateur: any[] = await fetchTableColumns("predicateur", ["tkPred"], [predicateur])
             const fkPred = dataMembre.length ? dataMembre[0].tkMembre : dataPredicateur.length ? dataPredicateur[0].tkPred : null
             const sermon = await createData(
                 "sermon",
@@ -167,7 +166,7 @@ export const createSermon = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
-export const updateSermon = async (req: request, res: response) => {
+export const updateSermon = async (req: Request, res: Response) => {
     const { id } = req.params
     const { theme, passage, dateSermon, lienAudio, lienFacebook, lienYoutube, predicateur } = req.body
     const error = checkError(
@@ -223,7 +222,7 @@ export const updateSermon = async (req: request, res: response) => {
         return res.status(400).json(error)
     }
 }
-export const deleteSermon = async (req: request, res: response) => {
+export const deleteSermon = async (req: Request, res: Response) => {
     const { id } = req.params,
         error = checkError(req.params, {
             id: Joi.string().required(),

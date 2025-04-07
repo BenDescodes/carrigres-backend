@@ -54,7 +54,7 @@ const countTableData = (table) => {
 exports.countTableData = countTableData;
 const fetchTableData = (table, clause = "") => {
     return new Promise((resolve, reject) => {
-        let script = "SELECT *  FROM " + table + " " + clause;
+        const script = "SELECT * FROM " + table + " " + clause;
         connect_1.default.query(script, (error, res) => {
             if (error) {
                 reject({ error: error });
