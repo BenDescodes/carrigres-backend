@@ -19,9 +19,9 @@ const sendMail_1 = require("../helper/sendMail");
 const suggestion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { nom, prenom, message } = req.body;
     const error = (0, method_1.checkError)(req.body, {
-        nom: joi_1.default.string().required().messages({ "any.required": "Entrer le champ nom correctement" }),
-        prenom: joi_1.default.string().required().messages({ "any.required": "Entrer le champ prenom correctement" }),
-        message: joi_1.default.string().required().messages({ "any.required": "Entrer le champ nom correctement" }),
+        nom: joi_1.default.string().required().messages({ "any.required": "Entrer nom correctement" }),
+        prenom: joi_1.default.string().required().messages({ "any.required": "Entrer prenom correctement" }),
+        message: joi_1.default.string().required().messages({ "any.required": "Entrer message correctement" }),
     });
     if (error === null || error === void 0 ? void 0 : error.length)
         return res.status(400).json({ error });
@@ -32,7 +32,7 @@ const suggestion = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             const mailOptions = (0, sendMail_1.getMailOption)(expediteur, message);
             sendMail_1.transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    res.status(400).json({ message: "Erreur lors de l'envoi du message, essayer plustard" });
+                    res.status(400).json({ message: "Erreur lors de l'envoi du message, essayer plus tard" });
                 }
                 else {
                     res.status(200).json({ message: "Message envoyer" });
@@ -40,7 +40,7 @@ const suggestion = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             });
         }
         else {
-            return res.status(400).json({ message: "Vous n'êtes pas membre veuillez vous enregistez " });
+            return res.status(400).json({ message: "Vous n'êtes pas membre, veuillez vous enregistrer" });
         }
     }
     catch (error) {

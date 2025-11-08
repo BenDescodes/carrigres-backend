@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createActiveMembre = exports.activeMembre = exports.checkOneMembre = exports.checkMembre = exports.celibataireMembre = exports.parentMembre = exports.deleteMembre = exports.updateProfilMembre = exports.updateMembre = exports.createMembre = exports.fetchOneMembre = exports.fetchAllMembre = void 0;
+exports.createActiveMembre = exports.activeMembre = exports.checkOneMembre = exports.checkMembre = exports.celibataireMembre = exports.deleteMembre = exports.updateProfilMembre = exports.updateMembre = exports.createMembre = exports.fetchOneMembre = exports.fetchAllMembre = void 0;
 const joi_1 = __importDefault(require("joi"));
 const method_1 = require("../helper/method");
 const multerConfig_1 = require("../middleware/multerConfig");
@@ -22,41 +22,33 @@ const moment_1 = __importDefault(require("moment"));
 const fs_1 = __importDefault(require("fs"));
 moment_1.default.locale("fr");
 const fetchAllMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const baseUrlProfil = `${req.protocol}://${req.get("host")}/src/images/`;
     try {
-        const membres = yield (0, method_1.fetchTableData)("v_membre_all", "ORDER by idMembre");
-        if (membres) {
-            let allMembre = [];
-            membres.map((items) => {
-                let data = {
-                    idMembre: items.idMembre,
-                    nom: items.nom,
-                    prenom: items.prenom,
-                    postnom: items.postnom,
-                    telephone: items.telephone,
-                    dateNaissance: (0, moment_1.default)(items.dateNaissance).format("LL"),
-                    email: items.email,
-                    sexe: items.sexe,
-                    avenue: items.avenue,
-                    quartier: items.quartier,
-                    commune: items.commune,
-                    reference: items.reference,
-                    fonction: items.fonction,
-                    pere: items.nomPere && `${items.nomPere}  ${items.prenomPere}`,
-                    mere: items.nomMere && `${items.nomMere}  ${items.prenomMere}`,
-                    conjoint: items.nomConjoint && `${items.nomConjoint} ${items.prenomConjoint}`,
-                    batise: items.isBaptise ? "Oui" : "Non",
-                    egliseBaptise: items.egliseBaptise,
-                    decede: items.idDecede,
-                    dateDecede: items.dateDecede,
-                    profil: items.profil ? `${req.protocol}://${req.get("host")}/src/images/${items.profil}` : null,
-                    tkMembre: items.tkMembre,
-                };
-                allMembre.push(data);
-            });
-            return res.status(200).json(allMembre);
-        }
-        else
-            res.status(200).json("Pas de membres");
+        const membres = yield (0, method_1.fetchTableData)("v_membre_all", "ORDER by idMembre DESC");
+        if (!(membres === null || membres === void 0 ? void 0 : membres.length))
+            return res.status(200).json([]);
+        const allMembre = membres.map((items) => ({
+            idMembre: items.idMembre,
+            nom: items.nom,
+            prenom: items.prenom,
+            postnom: items.postnom,
+            telephone: items.telephone,
+            anneeNaissance: items.anneeNaissance,
+            email: items.email,
+            sexe: items.sexe,
+            dateEnreg: (0, moment_1.default)(items.dateEnreg).format("L"),
+            avenue: items.avenue,
+            quartier: items.quartier,
+            commune: items.commune,
+            reference: items.reference,
+            conjoint: items.nomConjoint && `${items.nomConjoint} ${items.prenomConjoint}`,
+            batise: items.isBaptise ? "Oui" : "Non",
+            /* decede: items.idDecede,
+            dateDecede: items.dateDecede, */
+            profil: items.profil ? `${baseUrlProfil}${items.profil}` : null,
+            tkMembre: items.tkMembre,
+        }));
+        return res.status(200).json(allMembre);
     }
     catch (error) {
         return res.status(400).json(error);
@@ -78,18 +70,14 @@ const fetchOneMembre = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 prenom: items.prenom,
                 postnom: items.postnom,
                 telephone: items.telephone,
-                dateNaissance: (0, moment_1.default)(items.dateNaissance).format("YYYY-MM-DD"),
+                anneeNaissance: items.anneeNaissance,
                 email: items.email,
                 sexe: items.sexe,
                 avenue: items.avenue,
                 quartier: items.quartier,
                 commune: items.commune,
-                fonction: items.fkFonction,
-                pere: items.fkPere,
-                mere: items.fkMere,
                 conjoint: items.fkConjoint,
                 baptise: items.isBaptise,
-                egliseBaptise: items.egliseBaptise,
                 decede: items.idDecede,
                 dateDecede: items.dateDecede,
                 profil: items.profil ? `${req.protocol}://${req.get("host")}/src/images/${items.profil}` : null,
@@ -104,11 +92,11 @@ const fetchOneMembre = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.fetchOneMembre = fetchOneMembre;
 const createMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { nom, prenom, postnom, telephone, dateNaissance, email, sexe, avenue, quartier, commune, reference, fonction, mere, pere, conjoint, baptise, egliseBaptise, marie, } = req.body, { profil } = req.files, file = profil ? profil[0].filename : null, extension = file ? path_1.default.extname(file) : null, token = randomstring_1.default.generate(6), error = (0, method_1.checkError)(req.body, {
+    let { nom, prenom, postnom, telephone, anneeNaissance, email, sexe, avenue, quartier, commune, reference, conjoint, baptise, marie, } = req.body, { profil } = req.files, file = profil ? profil[0].filename : null, extension = file ? path_1.default.extname(file) : null, token = randomstring_1.default.generate(6), error = (0, method_1.checkError)(req.body, {
         nom: joi_1.default.string().min(3).message("Le nom doit avoir plus de 3 caracteres").required(),
         prenom: joi_1.default.string().min(3).message("Le prenom doit avoir plus de 3 caracteres"),
         postnom: joi_1.default.string().allow(""),
-        dateNaissance: joi_1.default.date(),
+        anneeNaissance: joi_1.default.number(),
         email: joi_1.default.string().email().message("Inserer un bon mail").allow(""),
         telephone: joi_1.default.string()
             .pattern(/^(?:\+\d{1,3})?\d{9,10}$/)
@@ -122,66 +110,52 @@ const createMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         quartier: joi_1.default.string(),
         commune: joi_1.default.string(),
         reference: joi_1.default.string(),
-        fonction: joi_1.default.allow(""),
         baptise: joi_1.default.string(),
-        egliseBaptise: joi_1.default.string().allow(""),
-        mere: joi_1.default.allow(""),
-        pere: joi_1.default.allow(""),
         conjoint: joi_1.default.allow(""),
         marie: joi_1.default.allow(""),
         profil: joi_1.default.string(),
     });
     if (error === null || error === void 0 ? void 0 : error.length)
         return res.status(400).json({ error });
-    fonction = fonction == "undefined" ? null : fonction;
-    mere = mere == "undefined" ? null : mere;
-    pere = pere == "undefined" ? null : pere;
     conjoint = conjoint == "undefined" ? null : conjoint;
     marie = marie == "undefined" ? null : marie;
     baptise = baptise == "true" ? true : false;
-    /* console.log(req.body) */
+    console.log(req.body);
     try {
-        if (!(yield (0, method_1.isFindColumn)("membre", ["nom", "prenom", "postnom", "dateNaissance"], [nom, prenom, postnom, dateNaissance]))) {
-            if (file)
+        if (!(yield (0, method_1.isFindColumn)("membre", ["nom", "prenom", "postnom", "telephone"], [nom, prenom, postnom, telephone]))) {
+            if (file && (profil === null || profil === void 0 ? void 0 : profil[0])) {
                 (0, multerConfig_1.fileCompresse)(extension, profil[0]);
+            }
             const membre = yield (0, method_1.createData)("membre", [
                 "nom",
                 "prenom",
                 "postnom",
                 "telephone",
-                "dateNaissance",
+                "anneeNaissance",
                 "email",
                 "sexe",
                 "avenue",
                 "quartier",
                 "commune",
                 "reference",
-                "fkfonction",
-                "fkmere",
-                "fkpere",
                 "fkconjoint",
                 "isBaptise",
-                "egliseBaptise",
                 "tkMembre",
                 "profil",
-            ], ["?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?"], [
+            ], ["?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?"], [
                 nom,
                 prenom,
                 postnom,
                 telephone,
-                dateNaissance,
+                anneeNaissance,
                 email,
                 sexe,
                 avenue,
                 quartier,
                 commune,
                 reference,
-                fonction,
-                mere,
-                pere,
                 conjoint,
                 baptise,
-                egliseBaptise,
                 token,
                 file,
             ]);
@@ -210,21 +184,18 @@ const createMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.createMembre = createMembre;
 const updateMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    let { nom, prenom, postnom, telephone, dateNaissance, email, sexe, avenue, quartier, commune, fonction, mere, pere, conjoint, baptise, idMembre, } = req.body;
+    let { nom, prenom, postnom, telephone, anneeNaissance, email, sexe, avenue, quartier, commune, conjoint, baptise, idMembre } = req.body;
     const error = (0, method_1.checkError)({
         nom,
         prenom,
         postnom,
         telephone,
-        dateNaissance,
+        anneeNaissance,
         email,
         sexe,
         avenue,
         quartier,
         commune,
-        fonction,
-        mere,
-        pere,
         conjoint,
         baptise,
         idMembre,
@@ -232,17 +203,14 @@ const updateMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         nom: joi_1.default.string().min(3).message("Le nom doit avoir plus de 3 caracteres").required(),
         prenom: joi_1.default.string().min(3).message("Le prenom doit avoir plus de 3 caracteres"),
         postnom: joi_1.default.string().allow(""),
-        dateNaissance: joi_1.default.date(),
+        anneeNaissance: joi_1.default.number(),
         email: joi_1.default.string().email().message("Inserer un bon mail").allow(""),
         telephone: joi_1.default.number(),
         sexe: joi_1.default.string().max(1).message("Un seul caractere"),
         avenue: joi_1.default.string(),
         quartier: joi_1.default.string(),
         commune: joi_1.default.string(),
-        fonction: joi_1.default.allow(""),
         baptise: joi_1.default.number(),
-        mere: joi_1.default.allow(""),
-        pere: joi_1.default.allow(""),
         conjoint: joi_1.default.allow(""),
         profil: joi_1.default.string(),
         idMembre: joi_1.default.number(),
@@ -251,9 +219,6 @@ const updateMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         console.log(error);
         return res.status(400).json({ error });
     }
-    fonction = fonction == "undefined" ? null : fonction;
-    mere = mere == "undefined" ? null : mere;
-    pere = pere == "undefined" ? null : pere;
     conjoint = conjoint == "undefined" ? null : conjoint;
     baptise = baptise == "true" ? true : false;
     try {
@@ -280,8 +245,8 @@ const updateMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 if (!updateTel)
                     error = true;
             }
-            if (membre[0].dateNaissance != dateNaissance) {
-                const updateDateNaissance = yield (0, method_1.updateData)("membre", ["dateNaissance"], ["tkMembre"], [dateNaissance, id]);
+            if (membre[0].anneeNaissance != anneeNaissance) {
+                const updateDateNaissance = yield (0, method_1.updateData)("membre", ["anneeNaissance"], ["tkMembre"], [anneeNaissance, id]);
                 if (!updateDateNaissance)
                     error = true;
             }
@@ -316,21 +281,6 @@ const updateMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 if (!updateBaptise)
                     error = true;
             }
-            if (membre[0].fkFonction != fonction) {
-                const updateFonction = yield (0, method_1.updateData)("membre", ["fkFonction"], ["tkMembre"], [fonction, id]);
-                if (!updateFonction)
-                    error = true;
-            }
-            if (membre[0].fkPere != pere) {
-                const updatePere = yield (0, method_1.updateData)("membre", ["fkPere"], ["tkMembre"], [pere, id]);
-                if (!updatePere)
-                    error = true;
-            }
-            if (membre[0].fkMere != mere) {
-                const updateMere = yield (0, method_1.updateData)("membre", ["fkMere"], ["tkMembre"], [mere, id]);
-                if (!updateMere)
-                    error = true;
-            }
             if (membre[0].fkConjoint != conjoint) {
                 const value = null;
                 //mettre à jour l'ancien partenaire pour qu'il devient zero
@@ -362,8 +312,9 @@ exports.updateMembre = updateMembre;
 const updateProfilMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     let { profil } = req.files, file = profil ? profil[0].filename : null, extension = file ? path_1.default.extname(file) : null;
-    if (file)
+    if (file && (profil === null || profil === void 0 ? void 0 : profil[0])) {
         (0, multerConfig_1.fileCompresse)(extension, profil[0]);
+    }
     try {
         const membre = yield (0, method_1.fetchTableColumns)("membre", ["tkMembre"], [id]);
         if (membre.length) {
@@ -423,36 +374,16 @@ const deleteMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.deleteMembre = deleteMembre;
-//recuperer les données par sexe pour remplir le select de Pere(M) et de Mere(M)
-const parentMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { sexe } = req.params;
-    try {
-        const parent = yield (0, method_1.fetchTableColumns)("membre", ["sexe"], [sexe]);
-        if (parent.length) {
-            const allParent = parent.map((items) => ({
-                value: items.idMembre,
-                label: `${items.nom} ${items.postnom} ${items.prenom}`,
-            }));
-            allParent.unshift({ value: "undefined", label: "sélectionner..." });
-            return res.status(200).json(allParent);
-        }
-        return res.status(200).json([]);
-    }
-    catch (error) {
-        res.status(400).json({ message: error || "An error occurred" });
-    }
-});
-exports.parentMembre = parentMembre;
 //api pour afficher le marie et le celibataire
 const celibataireMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { sexe } = req.params;
     try {
         const celibataire = yield (0, method_1.fetchTableColumns)("membre", ["sexe"], [sexe], "AND fkConjoint IS NULL");
         if (celibataire.length) {
-            const allCelibataire = celibataire.map((items) => ({
+            const allCelibataire = yield Promise.all(celibataire.map((items) => ({
                 value: items.idMembre,
                 label: `${items.nom} ${items.postnom} ${items.prenom}`,
-            }));
+            })));
             allCelibataire.unshift({ value: "undefined", label: "sélectionner..." });
             return res.status(200).json(allCelibataire);
         }
@@ -463,13 +394,13 @@ const celibataireMembre = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.celibataireMembre = celibataireMembre;
+//verification si on est membre
 const checkMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { nom, prenom, postnom } = req.body;
     const error = (0, method_1.checkError)(req.body, {
         nom: joi_1.default.string().min(3).required().messages({ "any.required": "Entrer le champ nom correctement" }),
         prenom: joi_1.default.string().min(3).required().messages({ "any.required": "Entrer le champ prenom correctement" }),
         postnom: joi_1.default.string().allow(""),
-        other: joi_1.default.string().allow(""),
     });
     if (error === null || error === void 0 ? void 0 : error.length)
         return res.status(400).json({ error });
@@ -499,15 +430,15 @@ const checkOneMembre = (req, res) => __awaiter(void 0, void 0, void 0, function*
             prenom: items.prenom,
             postnom: items.postnom && items.postnom,
             telephone: items.telephone,
-            dateNaissance: (0, moment_1.default)(items.dateNaissance).format("LL"),
+            anneeNaissance: items.anneeNaissance,
             email: items.email,
             sexe: items.sexe,
             avenue: items.avenue,
             quartier: items.quartier,
             commune: items.commune,
-            fonction: items.fonction,
-            pere: items.nomPere && `${items.nomPere} ${items.prenomPere}`,
-            mere: items.nomMere && `${items.nomMere} ${items.prenomMere}`,
+            /* fonction: items.fonction, */
+            /*  pere: items.nomPere && `${items.nomPere} ${items.prenomPere}`,
+            mere: items.nomMere && `${items.nomMere} ${items.prenomMere}`, */
             conjoint: items.nomConjoint && `${items.nomConjoint} ${items.prenomConjoint}`,
             tkConjoint: items.tkConjoint && items.tkConjoint,
             baptise: items.isBaptise ? "Oui" : "Non",
@@ -536,6 +467,7 @@ const activeMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.activeMembre = activeMembre;
+//api pour activer l'enregistrement des membres
 const createActiveMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const activeMembre = yield (0, method_1.fetchTableData)("activeMembre");

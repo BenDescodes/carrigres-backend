@@ -53,7 +53,7 @@ const storage = multer_1.default.diskStorage({
             callback(null, Date.now() + "." + extension);
         }
         else {
-            callback("Upload une image", false);
+            callback(new Error("Upload une image"), "");
         }
     },
 });

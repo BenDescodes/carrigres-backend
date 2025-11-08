@@ -8,7 +8,6 @@ import {
     deleteMembre,
     fetchAllMembre,
     fetchOneMembre,
-    parentMembre,
     createActiveMembre,
     updateMembre,
     updateProfilMembre,
@@ -28,7 +27,7 @@ router.post("/", uploadFiles, createMembre)
 router.put("/:id", updateMembre)
 router.put("/profil/:id", uploadFiles, updateProfilMembre)
 router.delete("/:id", deleteMembre)
-router.get("/parent/:sexe", parentMembre)
+/* router.get("/parent/:sexe", parentMembre) */
 router.get("/celibataire/:sexe", celibataireMembre)
 router.post("/checkMembres", checkMembre)
 router.get("/checkMembres/:tkMembre", checkOneMembre)

@@ -56,7 +56,6 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         catch (error) {
             return res.status(400).json({ message: `Erreur ${error}` });
         }
-        return;
     }));
 });
 exports.signup = signup;
@@ -95,19 +94,16 @@ const fetchAllUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const usersData = yield (0, method_1.fetchTableData)("v_membre_user", "WHERE login != 'SuperAdmin' Order by idRole DESC");
         if (usersData.length) {
-            let allUsers = [];
-            usersData.map((items) => {
-                let data = {
+            let allUsers = usersData.map((items) => {
+                return {
                     idUsers: items.idUsers,
                     login: items.login,
                     nomComplet: `${items.nom} ${items.prenom}`,
                     role: items.role,
                     profil: items.profil ? `${req.protocol}://${req.get("host")}/src/images/${items.profil}` : null,
                 };
-                allUsers.push(data);
             });
             res.status(200).json(allUsers);
-            return;
         }
         else
             return [];

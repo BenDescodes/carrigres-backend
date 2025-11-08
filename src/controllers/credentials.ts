@@ -51,8 +51,6 @@ export const signup = async (req: Request, res: Response) => {
         } catch (error: any) {
             return res.status(400).json({ message: `Erreur ${error}` })
         }
-
-        return
     })
 }
 export const login = async (req: Request, res: Response) => {
@@ -88,19 +86,16 @@ export const fetchAllUsers = async (req: Request, res: Response) => {
     try {
         const usersData: any[] = await fetchTableData("v_membre_user", "WHERE login != 'SuperAdmin' Order by idRole DESC")
         if (usersData.length) {
-            let allUsers: any[] = []
-            usersData.map((items: any) => {
-                let data = {
+            let allUsers = usersData.map((items: any) => {
+                return {
                     idUsers: items.idUsers,
                     login: items.login,
                     nomComplet: `${items.nom} ${items.prenom}`,
                     role: items.role,
                     profil: items.profil ? `${req.protocol}://${req.get("host")}/src/images/${items.profil}` : null,
                 }
-                allUsers.push(data)
             })
             res.status(200).json(allUsers)
-            return
         } else return []
     } catch (error) {
         res.status(400).json({ message: error })

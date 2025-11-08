@@ -19,22 +19,18 @@ const randomstring_1 = __importDefault(require("randomstring"));
 const fetchAllPred = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const predicateur = yield (0, method_1.fetchTableData)("predicateur", "ORDER by idPred DESC");
-        if (predicateur.length) {
-            let allPred = [];
-            predicateur.map((items) => {
-                let data = {
-                    id: items.idPred,
-                    titre: items.titre,
-                    nom: items.nom,
-                    prenom: items.prenom,
-                    tel: items.tel,
-                    eglise: items.eglise,
-                    tkPred: items.tkPred,
-                };
-                allPred.push(data);
-            });
-            return res.status(200).json(allPred);
-        }
+        if (!(predicateur === null || predicateur === void 0 ? void 0 : predicateur.length))
+            return res.status(200).json([]);
+        const allPredicateur = predicateur.map((items) => ({
+            id: items.idPred,
+            titre: items.titre,
+            nom: items.nom,
+            prenom: items.prenom,
+            tel: items.tel,
+            eglise: items.eglise,
+            tkPred: items.tkPred,
+        }));
+        return res.status(200).json(allPredicateur);
     }
     catch (error) {
         return res.status(400).json(error);

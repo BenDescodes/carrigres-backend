@@ -22,13 +22,14 @@ CREATE TABLE IF NOT EXISTS membre(
     prenom VARCHAR(50) NOT NULL,
     postnom VARCHAR(50),
     telephone VARCHAR(15),
-    dateNaissance DATE,
+    dateNaissance DATE, 
     email VARCHAR(50),
     sexe CHAR(1),
     avenue VARCHAR(50),
     quartier VARCHAR(50),
     commune VARCHAR(50),
     reference TEXT,
+    dateEnreg DATETIME(),
     fkFonction INT,
     fkPere INT,
     fkMere INT,
@@ -44,6 +45,11 @@ CREATE TABLE IF NOT EXISTS membre(
     CONSTRAINT fkMereMembre FOREIGN KEY (fkMere) REFERENCES membre(idMembre) ON DELETE SET NULL ON UPDATE SET NULL,
     CONSTRAINT fkConjointMembre FOREIGN KEY (fkConjoint) REFERENCES membre(idMembre) ON DELETE SET NULL ON UPDATE SET NULL
 )ENGINE = InnoDB CHARACTER SET utf8mb4;
+ALTER TABLE membre 
+ADD COLUMN dateEnreg DATETIME DEFAULT NOW()
+
+ALTER TABLE membre 
+ADD COLUMN isActive BOOLEAN DEFAULT 1
 /* --end membre */
 
 /* -table role : role est utilisé pour identifier les utilisateurs qui vont se connecter à l'administration et ajouter les informations */
@@ -70,7 +76,6 @@ CREATE TABLE IF NOT EXISTS users(
     CONSTRAINT fkUserRole FOREIGN KEY (fkRole) REFERENCES role(idRole) ON UPDATE CASCADE
 )ENGINE = InnoDB CHARACTER SET utf8mb4;
 
-
 INSERT INTO users(login,fkrole) VALUES ('SuperAdmin',1);
 /* --sermon */
 CREATE TABLE IF NOT EXISTS sermon(
@@ -80,11 +85,12 @@ CREATE TABLE IF NOT EXISTS sermon(
     dateSermon Date,
     lienFacebook TEXT,
     lienYoutube TEXT,
-    lienAudio TEXT,
+    lienFacebook2 TEXT,
     nbrVue INT,
     fkPredicateur TEXT,
     tkSermon VARCHAR(15)
 )ENGINE = InnoDB CHARACTER SET utf8mb4;
+ALTER TABLE sermon ADD COLUMN isActive BOOLEAN DEFAULT 1;
 /* --end sermon */
 /* --predicateur : table de predicateur etranger */
 CREATE TABLE IF NOT EXISTS predicateur(
@@ -96,6 +102,7 @@ CREATE TABLE IF NOT EXISTS predicateur(
     tel VARCHAR(50),
     tkPred VARCHAR(15)
 )ENGINE = InnoDB CHARACTER SET utf8mb4;
+ALTER TABLE predicateur ADD COLUMN isActive BOOLEAN DEFAULT 1;
 /* end predicateur */
 
 CREATE TABLE IF NOT EXISTS activeMembre(
@@ -109,14 +116,14 @@ CREATE OR REPLACE VIEW v_membre_user AS SELECT idUsers,nom, prenom, postnom,idRo
 LEFT JOIN membre ON fkMembre = idMembre
 INNER JOIN role on fkRole = idRole;
 
-CREATE OR REPLACE VIEW v_membre_all AS SELECT m.idMembre,m.nom,m.prenom,m.postnom,m.telephone,m.dateNaissance,m.email,m.sexe,m.avenue,
-m.quartier,m.commune,m.reference,f.fonction,pere.nom nomPere,pere.prenom prenomPere,mere.nom nomMere,mere.prenom prenomMere,c.nom nomConjoint,c.prenom prenomConjoint,c.tkMembre tkConjoint, m.isBaptise, m.egliseBaptise,m.dateDecede,m.profil,m.tkMembre 
+CREATE OR REPLACE VIEW v_membre_all AS SELECT m.idMembre,m.nom,m.prenom,m.postnom,m.telephone,m.anneeNaissance,m.email,m.sexe,m.avenue,
+m.quartier,m.commune,m.reference,m.dateEnreg,f.fonction,pere.nom nomPere,pere.prenom prenomPere,mere.nom nomMere,mere.prenom prenomMere,c.nom nomConjoint,c.prenom prenomConjoint,c.tkMembre tkConjoint, m.isBaptise, m.egliseBaptise,m.dateDecede,m.profil,m.tkMembre 
 FROM membre m LEFT JOIN fonction f ON m.fkFonction = f.idFonction
 LEFT JOIN membre pere ON m.fkPere = pere.idMembre
 LEFT JOIN membre mere ON m.fkMere = mere.idMembre
 LEFT JOIN membre c ON m.fkConjoint = c.idMembre;
 
-CREATE OR REPLACE VIEW V_sermon_all AS SELECT idSermon,theme, passage,dateSermon, lienFacebook,lienYoutube,lienAudio,nbrVue, p.titre, p.nom nomPredicateur, p.prenom prenomPredicateur, p.eglise,m.tkMembre, m.nom, m.prenom from sermon 
+CREATE OR REPLACE VIEW v_sermon_all AS SELECT idSermon,theme, passage,dateSermon, lienFacebook,lienYoutube,lienFacebook2,nbrVue,p.tkPred, p.titre, p.nom nomPredicateur, p.prenom prenomPredicateur, p.eglise,m.tkMembre, m.nom, m.prenom from sermon 
 LEFT JOIN predicateur p ON fkPredicateur = p.tkPred
 LEFT JOIN membre m on fkPredicateur = m.tkMembre;
 

@@ -9,6 +9,7 @@ const multerConfig_1 = require("../middleware/multerConfig");
 const uploadFiles = multerConfig_1.upload.fields([{ name: "imageSermon", maxCount: 1 }]);
 const router = express_1.default.Router();
 router.get("/pasteurs", sermons_1.fetchAllSermonPasteur);
+router.get("/other", sermons_1.fetchOtherSermon);
 router.get("/", sermons_1.fetchAllSermon);
 router.get("/:id", sermons_1.fetchOneSermon);
 router.post("/", uploadFiles, sermons_1.createSermon);

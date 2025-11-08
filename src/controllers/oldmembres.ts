@@ -19,35 +19,46 @@ import path from "path"
 import moment from "moment"
 import fs from "fs"
 moment.locale("fr")
+
+/* interface MulterRequest extends Request {
+    files?: {
+        profil?: File[]
+    }
+} */
+
 export const fetchAllMembre = async (req: Request, res: Response) => {
-    const baseUrlProfil = `${req.protocol}://${req.get("host")}/src/images/`
     try {
         const membres: any[] = await fetchTableData("v_membre_all", "ORDER by idMembre DESC")
-        if (!membres?.length) return res.status(200).json([])
+        if (membres) {
+            let allMembre = membres.map((items: any) => {
+                return {
+                    idMembre: items.idMembre,
+                    nom: items.nom,
+                    prenom: items.prenom,
+                    postnom: items.postnom,
+                    telephone: items.telephone,
+                    dateNaissance: moment(items.dateNaissance).format("LL"),
+                    email: items.email,
+                    sexe: items.sexe,
+                    avenue: items.avenue,
+                    quartier: items.quartier,
+                    commune: items.commune,
+                    reference: items.reference,
+                    fonction: items.fonction,
+                    pere: items.nomPere && `${items.nomPere}  ${items.prenomPere}`,
+                    mere: items.nomMere && `${items.nomMere}  ${items.prenomMere}`,
+                    conjoint: items.nomConjoint && `${items.nomConjoint} ${items.prenomConjoint}`,
+                    batise: items.isBaptise ? "Oui" : "Non",
+                    egliseBaptise: items.egliseBaptise,
+                    decede: items.idDecede,
+                    dateDecede: items.dateDecede,
+                    profil: items.profil ? `${req.protocol}://${req.get("host")}/src/images/${items.profil}` : null,
+                    tkMembre: items.tkMembre,
+                }
+            })
 
-        const allMembre = membres.map((items: any) => ({
-            idMembre: items.idMembre,
-            nom: items.nom,
-            prenom: items.prenom,
-            postnom: items.postnom,
-            telephone: items.telephone,
-            anneeNaissance: items.anneeNaissance,
-            email: items.email,
-            sexe: items.sexe,
-            dateEnreg: moment(items.dateEnreg).format("L"),
-            avenue: items.avenue,
-            quartier: items.quartier,
-            commune: items.commune,
-            reference: items.reference,
-            conjoint: items.nomConjoint && `${items.nomConjoint} ${items.prenomConjoint}`,
-            batise: items.isBaptise ? "Oui" : "Non",
-            /* decede: items.idDecede,
-            dateDecede: items.dateDecede, */
-            profil: items.profil ? `${baseUrlProfil}${items.profil}` : null,
-            tkMembre: items.tkMembre,
-        }))
-
-        return res.status(200).json(allMembre)
+            return res.status(200).json(allMembre)
+        } else res.status(200).json("Pas de membres")
     } catch (error) {
         return res.status(400).json(error)
     }
@@ -67,14 +78,18 @@ export const fetchOneMembre = async (req: Request, res: Response) => {
                 prenom: items.prenom,
                 postnom: items.postnom,
                 telephone: items.telephone,
-                anneeNaissance: items.anneeNaissance,
+                dateNaissance: moment(items.dateNaissance).format("YYYY-MM-DD"),
                 email: items.email,
                 sexe: items.sexe,
                 avenue: items.avenue,
                 quartier: items.quartier,
                 commune: items.commune,
+                fonction: items.fkFonction,
+                pere: items.fkPere,
+                mere: items.fkMere,
                 conjoint: items.fkConjoint,
                 baptise: items.isBaptise,
+                egliseBaptise: items.egliseBaptise,
                 decede: items.idDecede,
                 dateDecede: items.dateDecede,
                 profil: items.profil ? `${req.protocol}://${req.get("host")}/src/images/${items.profil}` : null,
@@ -86,14 +101,150 @@ export const fetchOneMembre = async (req: Request, res: Response) => {
         return res.status(404).json(error)
     }
 }
-
+/*
 export const createMembre = async (req: Request, res: Response) => {
     let {
             nom,
             prenom,
             postnom,
             telephone,
-            anneeNaissance,
+            dateNaissance,
+            email,
+            sexe,
+            avenue,
+            quartier,
+            commune,
+            reference,
+            fonction,
+            mere,
+            pere,
+            conjoint,
+            baptise,
+            egliseBaptise,
+            marie,
+        } = req.body,
+        { profil } = req.files as { profil?: Express.Multer.File[] },
+        file: any = profil ? profil[0].filename : null,
+        extension: any = file ? path.extname(file) : null,
+        token: string = randomstring.generate(6),
+        error: any = checkError(req.body, {
+            nom: Joi.string().min(3).message("Le nom doit avoir plus de 3 caracteres").required(),
+            prenom: Joi.string().min(3).message("Le prenom doit avoir plus de 3 caracteres"),
+            postnom: Joi.string().allow(""),
+            dateNaissance: Joi.date(),
+            email: Joi.string().email().message("Inserer un bon mail").allow(""),
+            telephone: Joi.string()
+                .pattern(/^(?:\+\d{1,3})?\d{9,10}$/)
+                .allow("")
+                .messages({
+                    "string.pattern.base":
+                        "Le numéro de téléphone doit contenir 10 chiffres ou commencer par un indicatif de pays suivi de 10 chiffres.",
+                    "any.required": "Le numéro de téléphone est requis.",
+                }),
+            sexe: Joi.string().max(1).message("Un seul caractere"),
+            avenue: Joi.string(),
+            quartier: Joi.string(),
+            commune: Joi.string(),
+            reference: Joi.string(),
+            fonction: Joi.allow(""),
+            baptise: Joi.string(),
+            egliseBaptise: Joi.string().allow(""),
+            mere: Joi.allow(""),
+            pere: Joi.allow(""),
+            conjoint: Joi.allow(""),
+            marie: Joi.allow(""),
+            profil: Joi.string(),
+        })
+
+    if (error?.length) return res.status(400).json({ error })
+
+    fonction = fonction == "undefined" ? null : fonction
+    mere = mere == "undefined" ? null : mere
+    pere = pere == "undefined" ? null : pere
+    conjoint = conjoint == "undefined" ? null : conjoint
+    marie = marie == "undefined" ? null : marie
+    baptise = baptise == "true" ? true : false
+    
+    try {
+        if (
+            !(await isFindColumn("membre", ["nom", "prenom", "postnom", "dateNaissance"], [nom, prenom, postnom, dateNaissance]))
+        ) {
+            if (file && profil?.[0]) {
+                fileCompresse(extension, profil[0])
+            }
+            const membre: any = await createData(
+                "membre",
+                [
+                    "nom",
+                    "prenom",
+                    "postnom",
+                    "telephone",
+                    "dateNaissance",
+                    "email",
+                    "sexe",
+                    "avenue",
+                    "quartier",
+                    "commune",
+                    "reference",
+                    "fkfonction",
+                    "fkmere",
+                    "fkpere",
+                    "fkconjoint",
+                    "isBaptise",
+                    "egliseBaptise",
+                    "tkMembre",
+                    "profil",
+                ],
+                ["?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?"],
+                [
+                    nom,
+                    prenom,
+                    postnom,
+                    telephone,
+                    dateNaissance,
+                    email,
+                    sexe,
+                    avenue,
+                    quartier,
+                    commune,
+                    reference,
+                    fonction,
+                    mere,
+                    pere,
+                    conjoint,
+                    baptise,
+                    egliseBaptise,
+                    token,
+                    file,
+                ]
+            )
+            if (membre) {
+                if (conjoint) {
+                    //mettre à jour la colone marier chez un l'autre membre choisie dans le formulaire
+                    const lastInsertId = membre?.insertId
+                    const updateMembreMarie = updateData("membre", ["fkConjoint"], ["idMembre"], [lastInsertId, conjoint])
+                }
+                res.status(200).json({ message: "Enregistrement effectué" })
+            } else
+                res.status(400).json({
+                    success: 0,
+                    message: "Erreur survenu lors de l'enregistrement",
+                })
+            return
+        } else res.status(400).json({ message: "Ce Membre existe déjà" })
+    } catch (error) {
+        return res.status(400).json(error)
+    }
+}*/
+
+export const createMembre = async (req: Request, res: Response) => {
+    console.log(req.body)
+    let {
+            nom,
+            prenom,
+            postnom,
+            telephone,
+            dateNaissance,
             email,
             sexe,
             avenue,
@@ -112,7 +263,7 @@ export const createMembre = async (req: Request, res: Response) => {
             nom: Joi.string().min(3).message("Le nom doit avoir plus de 3 caracteres").required(),
             prenom: Joi.string().min(3).message("Le prenom doit avoir plus de 3 caracteres"),
             postnom: Joi.string().allow(""),
-            anneeNaissance: Joi.number(),
+            dateNaissance: Joi.date(),
             email: Joi.string().email().message("Inserer un bon mail").allow(""),
             telephone: Joi.string()
                 .pattern(/^(?:\+\d{1,3})?\d{9,10}$/)
@@ -138,9 +289,11 @@ export const createMembre = async (req: Request, res: Response) => {
     conjoint = conjoint == "undefined" ? null : conjoint
     marie = marie == "undefined" ? null : marie
     baptise = baptise == "true" ? true : false
-
+    /* console.log(req.body) */
     try {
-        if (!(await isFindColumn("membre", ["nom", "prenom", "postnom", "telephone"], [nom, prenom, postnom, telephone]))) {
+        if (
+            !(await isFindColumn("membre", ["nom", "prenom", "postnom", "dateNaissance"], [nom, prenom, postnom, dateNaissance]))
+        ) {
             if (file && profil?.[0]) {
                 fileCompresse(extension, profil[0])
             }
@@ -151,7 +304,7 @@ export const createMembre = async (req: Request, res: Response) => {
                     "prenom",
                     "postnom",
                     "telephone",
-                    "anneeNaissance",
+                    "dateNaissance",
                     "email",
                     "sexe",
                     "avenue",
@@ -169,7 +322,7 @@ export const createMembre = async (req: Request, res: Response) => {
                     prenom,
                     postnom,
                     telephone,
-                    anneeNaissance,
+                    dateNaissance,
                     email,
                     sexe,
                     avenue,
@@ -203,20 +356,39 @@ export const createMembre = async (req: Request, res: Response) => {
 
 export const updateMembre = async (req: Request, res: Response) => {
     const { id } = req.params
-    let { nom, prenom, postnom, telephone, anneeNaissance, email, sexe, avenue, quartier, commune, conjoint, baptise, idMembre } =
-        req.body
+    let {
+        nom,
+        prenom,
+        postnom,
+        telephone,
+        dateNaissance,
+        email,
+        sexe,
+        avenue,
+        quartier,
+        commune,
+        fonction,
+        mere,
+        pere,
+        conjoint,
+        baptise,
+        idMembre,
+    } = req.body
     const error = checkError(
         {
             nom,
             prenom,
             postnom,
             telephone,
-            anneeNaissance,
+            dateNaissance,
             email,
             sexe,
             avenue,
             quartier,
             commune,
+            fonction,
+            mere,
+            pere,
             conjoint,
             baptise,
             idMembre,
@@ -225,14 +397,17 @@ export const updateMembre = async (req: Request, res: Response) => {
             nom: Joi.string().min(3).message("Le nom doit avoir plus de 3 caracteres").required(),
             prenom: Joi.string().min(3).message("Le prenom doit avoir plus de 3 caracteres"),
             postnom: Joi.string().allow(""),
-            anneeNaissance: Joi.number(),
+            dateNaissance: Joi.date(),
             email: Joi.string().email().message("Inserer un bon mail").allow(""),
             telephone: Joi.number(),
             sexe: Joi.string().max(1).message("Un seul caractere"),
             avenue: Joi.string(),
             quartier: Joi.string(),
             commune: Joi.string(),
+            fonction: Joi.allow(""),
             baptise: Joi.number(),
+            mere: Joi.allow(""),
+            pere: Joi.allow(""),
             conjoint: Joi.allow(""),
             profil: Joi.string(),
             idMembre: Joi.number(),
@@ -243,6 +418,9 @@ export const updateMembre = async (req: Request, res: Response) => {
         return res.status(400).json({ error })
     }
 
+    fonction = fonction == "undefined" ? null : fonction
+    mere = mere == "undefined" ? null : mere
+    pere = pere == "undefined" ? null : pere
     conjoint = conjoint == "undefined" ? null : conjoint
     baptise = baptise == "true" ? true : false
 
@@ -266,8 +444,8 @@ export const updateMembre = async (req: Request, res: Response) => {
                 const updateTel = await updateData("membre", ["telephone"], ["tkMembre"], [telephone, id])
                 if (!updateTel) error = true
             }
-            if (membre[0].anneeNaissance != anneeNaissance) {
-                const updateDateNaissance = await updateData("membre", ["anneeNaissance"], ["tkMembre"], [anneeNaissance, id])
+            if (membre[0].dateNaissance != dateNaissance) {
+                const updateDateNaissance = await updateData("membre", ["dateNaissance"], ["tkMembre"], [dateNaissance, id])
                 if (!updateDateNaissance) error = true
             }
             if (membre[0].email != email) {
@@ -295,7 +473,18 @@ export const updateMembre = async (req: Request, res: Response) => {
                 const updateBaptise = await updateData("membre", ["isBaptise"], ["tkMembre"], [req.body.baptise, id])
                 if (!updateBaptise) error = true
             }
-
+            if (membre[0].fkFonction != fonction) {
+                const updateFonction = await updateData("membre", ["fkFonction"], ["tkMembre"], [fonction, id])
+                if (!updateFonction) error = true
+            }
+            if (membre[0].fkPere != pere) {
+                const updatePere = await updateData("membre", ["fkPere"], ["tkMembre"], [pere, id])
+                if (!updatePere) error = true
+            }
+            if (membre[0].fkMere != mere) {
+                const updateMere = await updateData("membre", ["fkMere"], ["tkMembre"], [mere, id])
+                if (!updateMere) error = true
+            }
             if (membre[0].fkConjoint != conjoint) {
                 const value = null
                 //mettre à jour l'ancien partenaire pour qu'il devient zero
@@ -376,7 +565,26 @@ export const deleteMembre = async (req: Request, res: Response) => {
         res.status(400).json(error)
     }
 }
-
+//recuperer les données par sexe pour remplir le select de Pere(M) et de Mere(M)
+export const parentMembre = async (req: Request, res: Response) => {
+    const { sexe } = req.params
+    try {
+        const parent: any[] = await fetchTableColumns("membre", ["sexe"], [sexe])
+        if (parent.length) {
+            const allParent = await Promise.all(
+                parent.map((items: any) => ({
+                    value: items.idMembre,
+                    label: `${items.nom} ${items.postnom} ${items.prenom}`,
+                }))
+            )
+            allParent.unshift({ value: "undefined", label: "sélectionner..." })
+            return res.status(200).json(allParent)
+        }
+        return res.status(200).json([])
+    } catch (error: any) {
+        res.status(400).json({ message: error || "An error occurred" })
+    }
+}
 //api pour afficher le marie et le celibataire
 export const celibataireMembre = async (req: Request, res: Response) => {
     const { sexe } = req.params
@@ -397,7 +605,6 @@ export const celibataireMembre = async (req: Request, res: Response) => {
         res.status(400).json({ message: error || "An error occurred" })
     }
 }
-//verification si on est membre
 export const checkMembre = async (req: Request, res: Response) => {
     let { nom, prenom, postnom } = req.body
     const error = checkError(req.body, {
@@ -429,15 +636,15 @@ export const checkOneMembre = async (req: Request, res: Response) => {
             prenom: items.prenom,
             postnom: items.postnom && items.postnom,
             telephone: items.telephone,
-            anneeNaissance: items.anneeNaissance,
+            dateNaissance: moment(items.dateNaissance).format("LL"),
             email: items.email,
             sexe: items.sexe,
             avenue: items.avenue,
             quartier: items.quartier,
             commune: items.commune,
-            /* fonction: items.fonction, */
-            /*  pere: items.nomPere && `${items.nomPere} ${items.prenomPere}`,
-            mere: items.nomMere && `${items.nomMere} ${items.prenomMere}`, */
+            fonction: items.fonction,
+            pere: items.nomPere && `${items.nomPere} ${items.prenomPere}`,
+            mere: items.nomMere && `${items.nomMere} ${items.prenomMere}`,
             conjoint: items.nomConjoint && `${items.nomConjoint} ${items.prenomConjoint}`,
             tkConjoint: items.tkConjoint && items.tkConjoint,
             baptise: items.isBaptise ? "Oui" : "Non",
@@ -452,7 +659,6 @@ export const checkOneMembre = async (req: Request, res: Response) => {
         return res.status(200).json(data)
     }
 }
-
 export const activeMembre = async (req: Request, res: Response) => {
     try {
         const activeMembre: any[] = await fetchTableData("activeMembre")
@@ -462,7 +668,6 @@ export const activeMembre = async (req: Request, res: Response) => {
         res.status(400).json(error)
     }
 }
-//api pour activer l'enregistrement des membres
 export const createActiveMembre = async (req: Request, res: Response) => {
     try {
         const activeMembre: any[] = await fetchTableData("activeMembre")

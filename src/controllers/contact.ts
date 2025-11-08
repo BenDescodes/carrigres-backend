@@ -7,9 +7,9 @@ import { getMailOption, transporter } from "../helper/sendMail"
 export const suggestion = async (req: Request, res: Response) => {
     const { nom, prenom, message } = req.body
     const error = checkError(req.body, {
-        nom: Joi.string().required().messages({ "any.required": "Entrer le champ nom correctement" }),
-        prenom: Joi.string().required().messages({ "any.required": "Entrer le champ prenom correctement" }),
-        message: Joi.string().required().messages({ "any.required": "Entrer le champ nom correctement" }),
+        nom: Joi.string().required().messages({ "any.required": "Entrer nom correctement" }),
+        prenom: Joi.string().required().messages({ "any.required": "Entrer prenom correctement" }),
+        message: Joi.string().required().messages({ "any.required": "Entrer message correctement" }),
     })
     if (error?.length) return res.status(400).json({ error })
     try {
@@ -19,13 +19,13 @@ export const suggestion = async (req: Request, res: Response) => {
             const mailOptions = getMailOption(expediteur, message)
             transporter.sendMail(mailOptions, (error: any, info: { response: any }) => {
                 if (error) {
-                    res.status(400).json({ message: "Erreur lors de l'envoi du message, essayer plustard" })
+                    res.status(400).json({ message: "Erreur lors de l'envoi du message, essayer plus tard" })
                 } else {
                     res.status(200).json({ message: "Message envoyer" })
                 }
             })
         } else {
-            return res.status(400).json({ message: "Vous n'êtes pas membre veuillez vous enregistez " })
+            return res.status(400).json({ message: "Vous n'êtes pas membre, veuillez vous enregistrer" })
         }
     } catch (error: any) {
         res.status(400).json({ message: error || "An error occurred" })

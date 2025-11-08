@@ -5,6 +5,7 @@ import {
     fetchAllSermon,
     fetchAllSermonPasteur,
     fetchOneSermon,
+    fetchOtherSermon,
     fetchPasteurOneSermon,
     updateSermon,
 } from "../controllers/sermons"
@@ -14,6 +15,7 @@ const uploadFiles = upload.fields([{ name: "imageSermon", maxCount: 1 }])
 const router = express.Router()
 
 router.get("/pasteurs", fetchAllSermonPasteur)
+router.get("/other", fetchOtherSermon)
 router.get("/", fetchAllSermon)
 router.get("/:id", fetchOneSermon)
 router.post("/", uploadFiles, createSermon)

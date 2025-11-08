@@ -18,35 +18,69 @@ moment.locale("fr")
 
 export const fetchAllSermon = async (req: Request, res: Response) => {
     try {
+        const sermon: any[] = await fetchTableData("v_sermon_all", "ORDER BY dateSermon DESC")
+        if (!sermon.length) return res.status(200).json([])
+
+        const allSermons = await Promise.all(
+            sermon.map(async (items: any) => {
+                const predicateur: string = items.nomPredicateur
+                    ? `${items.nomPredicateur} ${items.prenomPredicateur}`
+                    : `${items.nom} ${items.prenom}`
+
+                const eglise: string = items.eglise ? items.eglise : "Assemblée Chrétienne de Carrigres"
+
+                return {
+                    id: items.idSermon,
+                    theme: items.theme,
+                    passage: items.passage,
+                    dateSermon: dateFrancais(items.dateSermon),
+                    titre: items.titre ? items.titre : "",
+                    predicateur: predicateur,
+                    eglise: eglise,
+                    lienFacebook: items.lienFacebook,
+                    lienFacebook2: items.lienFacebook2,
+                    lienYoutube: items.lienYoutube,
+                    vue: items.nbrVue,
+                }
+            })
+        )
+        return res.status(200).json(allSermons)
+    } catch (error) {
+        return res.status(400).json(error)
+    }
+}
+
+export const fetchOtherSermon = async (req: Request, res: Response) => {
+    try {
         const script =
-            "SELECT * FROM V_sermon_all WHERE nom!=? OR nom is null AND prenom!=? OR prenom is null ORDER BY dateSermon DESC"
+            "SELECT * FROM v_sermon_all WHERE nom!=? OR nom is null AND prenom!=? OR prenom is null ORDER BY dateSermon DESC"
         const sermon: any[] = await personalQueryAsync(script, ["Kapanga", "Theophile"])
-        if (sermon.length) {
-            const fullSermons = await Promise.all(
-                sermon.map(async (items: any) => {
-                    const predicateur: string = items.nomPredicateur
-                        ? `${items.nomPredicateur} ${items.prenomPredicateur}`
-                        : `${items.nom} ${items.prenom}`
+        if (!sermon.length) return res.status(200).json([])
 
-                    const eglise: string = items.eglise ? items.eglise : "Assemblée Chrétienne de Carrigres"
+        const fullSermons = await Promise.all(
+            sermon.map(async (items: any) => {
+                const predicateur: string = items.nomPredicateur
+                    ? `${items.nomPredicateur} ${items.prenomPredicateur}`
+                    : `${items.nom} ${items.prenom}`
 
-                    return {
-                        id: items.idSermon,
-                        theme: items.theme,
-                        passage: items.passage,
-                        dateSermon: dateFrancais(items.dateSermon),
-                        titre: items.titre,
-                        predicateur: predicateur,
-                        eglise: eglise,
-                        lienFacebook: items.lienFacebook,
-                        lienYoutube: items.lienYoutube,
-                        lienAudio: items.lienAudio,
-                        vue: items.nbrVue,
-                    }
-                })
-            )
-            return res.status(200).json(fullSermons)
-        } else return []
+                const eglise: string = items.eglise ? items.eglise : "Assemblée Chrétienne de Carrigres"
+
+                return {
+                    id: items.idSermon,
+                    theme: items.theme,
+                    passage: items.passage,
+                    dateSermon: dateFrancais(items.dateSermon),
+                    titre: items.titre ? items.titre : "Frère",
+                    predicateur: predicateur,
+                    eglise: eglise,
+                    lienFacebook: items.lienFacebook,
+                    lienFacebook2: items.lienFacebook2,
+                    lienYoutube: items.lienYoutube,
+                    vue: items.nbrVue,
+                }
+            })
+        )
+        return res.status(200).json(fullSermons)
     } catch (error) {
         return res.status(400).json(error)
     }
@@ -59,76 +93,105 @@ export const fetchOneSermon = async (req: Request, res: Response) => {
     })
     if (error?.length) return res.status(400).json({ error })
     try {
-        const sermon: any[] = await fetchTableColumns("sermon", ["IdSermon"], [id])
-        if (sermon) {
-            const fullSermons = await Promise.all(
-                sermon.map(async (items: any) => {
-                    const [dataM, dataP]: [any[], any[]] = await Promise.all([
-                        fetchTableColumns("membre", ["tkMembre"], [items.fkPredicateur]),
-                        fetchTableColumns("predicateur", ["tkPred"], [items.fkPredicateur]),
-                    ])
+        const sermon: any[] = await fetchTableColumns("v_sermon_all", ["IdSermon"], [id])
+        if (!sermon.length) return res.status(200).json([])
 
-                    const predicateur: string | null = dataM.length
-                        ? `${dataM[0].nom} ${dataM[0].prenom}`
-                        : dataP.length
-                        ? `${dataP[0].prenom} ${dataP[0].nom}`
-                        : null
+        const items = sermon[0]
 
-                    const eglise: string = dataP.length ? dataP[0].eglise : "Assemblée Chrétienne de Carrigres"
+        const predicateur: string = items.nomPredicateur
+            ? `${items.prenomPredicateur} ${items.nomPredicateur}`
+            : `${items.prenom} ${items.nom}`
 
-                    let data = {
-                        id: items.idSermon,
-                        theme: items.theme,
-                        passage: items.passage,
-                        dateSermon: moment(items.dateSermon).format("YYYY-MM-DD"),
-                        dateSermonFront: dateFrancais(items.dateSermon),
-                        predicateur: predicateur,
-                        eglise: eglise,
-                        lienFacebook: items.lienFacebook,
-                        lienYoutube: items.lienYoutube,
-                        lienAudio: items.lienAudio,
-                        /* "image": items.imageSermon ? `${req.protocol}://${req.get('host')}/src/images/${items.imageSermon}` : null, */
-                        vue: items.nbrVue,
-                    }
-                    return data
-                })
-            )
-            return res.status(200).json(fullSermons[0])
+        const eglise: string = items.eglise || "Assemblée Chrétienne de Carrigres"
+
+        const oneSermon = {
+            id: items.idSermon,
+            theme: items.theme,
+            passage: items.passage,
+            dateSermon: moment(items.dateSermon).format("YYYY-MM-DD"),
+            dateSermonFront: dateFrancais(items.dateSermon),
+            predicateur: predicateur,
+            eglise: eglise,
+            lienFacebook: items.lienFacebook,
+            lienFacebook2: items.lienFacebook2,
+            lienYoutube: items.lienYoutube,
+            vue: items.nbrVue,
         }
+        return res.status(200).json(oneSermon)
     } catch (error) {
         return res.status(400).json(error)
+    }
+    try {
+        const sermon: any[] = await fetchTableColumns("v_sermon_all", ["IdSermon"], [id])
+
+        if (!sermon.length) return res.status(200).json([])
+
+        const [oneSermon] = await Promise.all([
+            (async () => {
+                const items = sermon[0]
+
+                const predicateur: string = items.nomPredicateur
+                    ? `${items.prenomPredicateur} ${items.nomPredicateur}`
+                    : `${items.prenom} ${items.nom}`
+
+                const eglise: string = items.eglise || "Assemblée Chrétienne de Carrigres"
+
+                return {
+                    id: items.idSermon,
+                    theme: items.theme,
+                    passage: items.passage,
+                    dateSermon: moment(items.dateSermon).format("YYYY-MM-DD"),
+                    dateSermonFront: dateFrancais(items.dateSermon),
+                    predicateur: predicateur,
+                    eglise: eglise,
+                    lienFacebook: items.lienFacebook,
+                    lienFacebook2: items.lienFacebook2,
+                    lienYoutube: items.lienYoutube,
+                    vue: items.nbrVue,
+                }
+            })(),
+        ])
+
+        return res.status(200).json(oneSermon)
+    } catch (error) {
+        return res.status(400).json({ error: error.message || error })
     }
 }
 
 export const fetchAllSermonPasteur = async (req: Request, res: Response) => {
     try {
-        const sermon: any[] = await fetchTableColumns("V_sermon_all", ["nom", "prenom"], ["Kapanga", "Theophile"])
-        if (sermon.length) {
-            const fullSermons = await Promise.all(
-                sermon.map(async (items: any) => {
-                    const predicateur: string = items.nomPredicateur
-                        ? `${items.nomPredicateur} ${items.prenomPredicateur}`
-                        : `${items.nom} ${items.prenom}`
+        const sermon: any[] = await fetchTableColumns(
+            "v_sermon_all",
+            ["nom", "prenom"],
+            ["Kapanga", "Theophile"],
+            "ORDER by dateSermon DESC"
+        )
+        if (!sermon.length) return res.status(200).json([])
 
-                    const eglise: string = items.eglise ? items.eglise : "Assemblée Chrétienne de Carrigres"
+        const fullSermons = await Promise.all(
+            sermon.map(async (items: any) => {
+                const predicateur: string = items.nomPredicateur
+                    ? `${items.nomPredicateur} ${items.prenomPredicateur}`
+                    : `${items.nom} ${items.prenom}`
 
-                    return {
-                        id: items.idSermon,
-                        theme: items.theme,
-                        passage: items.passage,
-                        dateSermon: dateFrancais(items.dateSermon),
-                        titre: "Pasteur",
-                        predicateur: predicateur,
-                        eglise: eglise,
-                        lienFacebook: items.lienFacebook,
-                        lienYoutube: items.lienYoutube,
-                        lienAudio: items.lienAudio,
-                        vue: items.nbrVue,
-                    }
-                })
-            )
-            return res.status(200).json(fullSermons)
-        } else return []
+                const eglise: string = items.eglise ? items.eglise : "Assemblée Chrétienne de Carrigres"
+
+                return {
+                    id: items.idSermon,
+                    theme: items.theme,
+                    passage: items.passage,
+                    dateSermon: dateFrancais(items.dateSermon),
+                    titre: "Pasteur",
+                    predicateur: predicateur,
+                    eglise: eglise,
+                    lienFacebook: items.lienFacebook,
+                    lienFacebook2: items.lienFacebook2,
+                    lienYoutube: items.lienYoutube,
+                    vue: items.nbrVue,
+                }
+            })
+        )
+        return res.status(200).json(fullSermons)
     } catch (error) {
         return res.status(400).json(error)
     }
@@ -137,7 +200,7 @@ export const fetchAllSermonPasteur = async (req: Request, res: Response) => {
 export const fetchPasteurOneSermon = async (req: Request, res: Response) => {}
 
 export const createSermon = async (req: Request, res: Response) => {
-    const { theme, passage, date, lienFacebook, lienYoutube, lienAudio, predicateur } = req.body,
+    const { theme, passage, date, lienFacebook, lienYoutube, lienFacebook2, predicateur } = req.body,
         token: string = randomstring.generate(6),
         error = checkError(req.body, {
             theme: Joi.string().required(),
@@ -145,7 +208,7 @@ export const createSermon = async (req: Request, res: Response) => {
             date: Joi.date().required(),
             lienFacebook: Joi.allow(""),
             lienYoutube: Joi.allow(""),
-            lienAudio: Joi.allow(""),
+            lienFacebook2: Joi.allow(""),
             predicateur: Joi.string(),
         })
     if (error?.length) return res.status(400).json(error)
@@ -156,9 +219,9 @@ export const createSermon = async (req: Request, res: Response) => {
             const fkPred = dataMembre.length ? dataMembre[0].tkMembre : dataPredicateur.length ? dataPredicateur[0].tkPred : null
             const sermon = await createData(
                 "sermon",
-                ["theme", "passage", "dateSermon", "lienFacebook", "lienYoutube", "lienAudio", "tkSermon", "fkPredicateur"],
+                ["theme", "passage", "dateSermon", "lienFacebook", "lienYoutube", "lienFacebook2", "tkSermon", "fkPredicateur"],
                 ["?", "?", "?", "?", "?", "?", "?", "?"],
-                [theme, passage, date, lienFacebook, lienYoutube, lienAudio, token, fkPred]
+                [theme, passage, date, lienFacebook, lienYoutube, lienFacebook2, token, fkPred]
             )
             if (sermon) return res.status(200).json({ message: "Enregistrement effectué" })
         } else return res.status(400).json({ message: "Cette Predication est déjà enregistré" })
@@ -168,16 +231,16 @@ export const createSermon = async (req: Request, res: Response) => {
 }
 export const updateSermon = async (req: Request, res: Response) => {
     const { id } = req.params
-    const { theme, passage, dateSermon, lienAudio, lienFacebook, lienYoutube, predicateur } = req.body
+    const { theme, passage, dateSermon, lienFacebook2, lienFacebook, lienYoutube, predicateur } = req.body
     const error = checkError(
-        { theme, passage, dateSermon, lienAudio, lienFacebook, lienYoutube, predicateur },
+        { theme, passage, dateSermon, lienFacebook2, lienFacebook, lienYoutube, predicateur },
         {
             theme: Joi.string().required(),
             passage: Joi.string().required(),
             dateSermon: Joi.date().required(),
             lienFacebook: Joi.string().allow(""),
             lienYoutube: Joi.string().allow(""),
-            lienAudio: Joi.string().allow(""),
+            lienFacebook2: Joi.string().allow(""),
             predicateur: Joi.string(),
         }
     )
@@ -206,9 +269,9 @@ export const updateSermon = async (req: Request, res: Response) => {
                 const updateVideo = await updateData("sermon", ["lienYoutube"], ["idSermon"], [lienYoutube, id])
                 if (!updateVideo) error = true
             }
-            if (sermon[0].lienAudio != lienAudio) {
-                const updateAudio = await updateData("sermon", ["lienAudio"], ["idSermon"], [lienAudio, id])
-                if (!updateAudio) error = true
+            if (sermon[0].lienFacebook2 != lienFacebook2) {
+                const updateVideo2 = await updateData("sermon", ["lienFacebook2"], ["idSermon"], [lienFacebook2, id])
+                if (!updateVideo2) error = true
             }
 
             if (sermon[0].fkPredicateur != predicateur) {

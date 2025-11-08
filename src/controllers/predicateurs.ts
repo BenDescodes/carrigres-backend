@@ -7,22 +7,17 @@ import { PredicateurType } from "../types/type"
 export const fetchAllPred = async (req: Request, res: Response) => {
     try {
         const predicateur: PredicateurType[] = await fetchTableData<PredicateurType>("predicateur", "ORDER by idPred DESC")
-        if (predicateur.length) {
-            let allPred: any = []
-            predicateur.map((items: any) => {
-                let data = {
-                    id: items.idPred,
-                    titre: items.titre,
-                    nom: items.nom,
-                    prenom: items.prenom,
-                    tel: items.tel,
-                    eglise: items.eglise,
-                    tkPred: items.tkPred,
-                }
-                allPred.push(data)
-            })
-            return res.status(200).json(allPred)
-        }
+        if (!predicateur?.length) return res.status(200).json([])
+        const allPredicateur = predicateur.map((items: any) => ({
+            id: items.idPred,
+            titre: items.titre,
+            nom: items.nom,
+            prenom: items.prenom,
+            tel: items.tel,
+            eglise: items.eglise,
+            tkPred: items.tkPred,
+        }))
+        return res.status(200).json(allPredicateur)
     } catch (error) {
         return res.status(400).json(error)
     }
