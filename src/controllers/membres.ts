@@ -1,24 +1,14 @@
 import Joi from "joi"
 import { Request, Response } from "express"
-import {
-    createData,
-    fetchTableData,
-    fetchTableColumns,
-    isFindColumn,
-    checkError,
-    deleteData,
-    updateData,
-    cancelTransaction,
-    startTransaction,
-    commitTransaction,
-    personalQueryAsync,
-} from "../helper/method"
+import { createData, fetchTableData, fetchTableColumns, isFindColumn, checkError, deleteData, updateData } from "../helper/method"
 import { fileCompresse } from "../middleware/multerConfig"
 import randomstring from "randomstring"
 import path from "path"
 import moment from "moment"
 import fs from "fs"
 moment.locale("fr")
+const { query } = require("../config/connect")
+
 export const fetchAllMembre = async (req: Request, res: Response) => {
     const baseUrlProfil = `${req.protocol}://${req.get("host")}/src/images/`
     try {
@@ -163,7 +153,6 @@ export const createMembre = async (req: Request, res: Response) => {
                     "tkMembre",
                     "profil",
                 ],
-                ["?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?"],
                 [
                     nom,
                     prenom,
@@ -308,10 +297,8 @@ export const updateMembre = async (req: Request, res: Response) => {
             }
 
             if (error) {
-                /* cancelTransaction() */
                 return res.status(400).json({ message: "Erreur survenu lors de la mise à jour" })
             } else {
-                /* commitTransaction() */
                 return res.status(200).json({ message: "Modification réussi" })
             }
         } else res.status(400).json({ messsage: "Ce membre n'existe pas " })
@@ -408,10 +395,10 @@ export const checkMembre = async (req: Request, res: Response) => {
     if (error?.length) return res.status(400).json({ error })
     try {
         const script = "SELECT * FROM membre WHERE nom=? AND prenom=? AND postnom=?"
-        const membresCheck: any = await personalQueryAsync(script, [nom, prenom, postnom])
+        const membresCheck: any = await query(script, [nom, prenom, postnom])
         if (membresCheck.length)
-            return res.status(200).json({ message: "Merci ! Vous etês membre", membre: membresCheck[0].tkMembre })
-        else return res.status(400).json({ message: "Erreur vous êtes pas membre" })
+            return res.status(200).json({ message: "Merci ! Vous etês enregistré", membre: membresCheck[0].tkMembre })
+        else return res.status(400).json({ message: "Erreur vous êtes pas encore enregistré" })
     } catch (error: any) {
         res.status(400).json({ message: error || "An error occurred" })
     }
@@ -421,7 +408,7 @@ export const checkOneMembre = async (req: Request, res: Response) => {
     if (tkMembre) {
         const oneMembre: any = await fetchTableColumns("v_membre_all", ["tkMembre"], [tkMembre])
         const script = "SELECT nom,prenom,tkMembre FROM membre WHERE fkPere = ?"
-        const childrenMembre: any = await personalQueryAsync(script, [oneMembre[0].idMembre])
+        const childrenMembre: any = await query(script, [oneMembre[0].idMembre])
         const items = oneMembre[0]
         const data = {
             idMembre: items.idMembre,

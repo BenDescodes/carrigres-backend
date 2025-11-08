@@ -1,15 +1,7 @@
 import Joi from "joi"
 import { Request, Response } from "express"
-import {
-    createData,
-    fetchTableData,
-    fetchTableColumns,
-    isFindColumn,
-    checkError,
-    deleteData,
-    updateData,
-    personalQueryAsync,
-} from "../helper/method"
+import { createData, fetchTableData, fetchTableColumns, isFindColumn, checkError, deleteData, updateData } from "../helper/method"
+const { query } = require("../config/connect")
 import randomstring from "randomstring"
 import { fileCompresse } from "../middleware/multerConfig"
 import dateFrancais from "../helper/dateConfig"
@@ -52,9 +44,16 @@ export const fetchAllSermon = async (req: Request, res: Response) => {
 
 export const fetchOtherSermon = async (req: Request, res: Response) => {
     try {
-        const script =
-            "SELECT * FROM v_sermon_all WHERE nom!=? OR nom is null AND prenom!=? OR prenom is null ORDER BY dateSermon DESC"
-        const sermon: any[] = await personalQueryAsync(script, ["Kapanga", "Theophile"])
+        /* const script =
+            "SELECT * FROM v_sermon_all WHERE nom!=? OR nom is null AND prenom!=? OR prenom is null ORDER BY dateSermon DESC" */
+        const script = `
+                        SELECT *
+                        FROM v_sermon_all
+                        WHERE (nom != ? OR nom IS NULL)
+                        AND (prenom != ? OR prenom IS NULL)
+                        ORDER BY dateSermon DESC
+                        `
+        const sermon: any[] = await query(script, ["Kapanga", "Theophile"])
         if (!sermon.length) return res.status(200).json([])
 
         const fullSermons = await Promise.all(
@@ -197,8 +196,6 @@ export const fetchAllSermonPasteur = async (req: Request, res: Response) => {
     }
 }
 
-export const fetchPasteurOneSermon = async (req: Request, res: Response) => {}
-
 export const createSermon = async (req: Request, res: Response) => {
     const { theme, passage, date, lienFacebook, lienYoutube, lienFacebook2, predicateur } = req.body,
         token: string = randomstring.generate(6),
@@ -220,7 +217,6 @@ export const createSermon = async (req: Request, res: Response) => {
             const sermon = await createData(
                 "sermon",
                 ["theme", "passage", "dateSermon", "lienFacebook", "lienYoutube", "lienFacebook2", "tkSermon", "fkPredicateur"],
-                ["?", "?", "?", "?", "?", "?", "?", "?"],
                 [theme, passage, date, lienFacebook, lienYoutube, lienFacebook2, token, fkPred]
             )
             if (sermon) return res.status(200).json({ message: "Enregistrement effectué" })

@@ -1,4 +1,3 @@
-import connect from "../config/connect"
 import Joi from "joi"
 import {
     checkError,
@@ -17,22 +16,36 @@ import { sign } from "jsonwebtoken"
 
 export const signup = async (req: Request, res: Response) => {
     const { login, mdp, role, membre, confMdp } = req.body
-    const error = checkError(req.body, {
-        login: Joi.string().required().messages({ "any.only": "Le login  est obligatoire" }),
-        mdp: Joi.string().required().messages({
-            "string.empty": "Le mot de passe est obligatoire.",
-        }),
+
+    /* const error = checkError(req.body, {
+        login: Joi.string().required().messages({ "any.required": "Le login  est obligatoire" }),
+       
         confMdp: Joi.string().required().valid(Joi.ref("mdp")).messages({
-            "any.only": "Les deux mots de passe sont incohérents.",
+            "any.required": "Les deux mots de passe sont incohérents.",
             "string.empty": "La confirmation du mot de passe est obligatoire.",
         }),
         membre: Joi.number().required().messages({ "string.empty": "Selectionner membre" }),
         role: Joi.number().required().messages({ "string.empty": "Selectionner un role" }),
     })
+    if (error) return res.status(400).json({ message: error[0]?.message }) */
 
-    if (error) return res.status(400).json({ message: error[0]?.message })
+    const errors = checkError(req.body, {
+        login: Joi.string().required().messages({ "any.required": "Le login  est obligatoire" }),
+        mdp: Joi.string().required().messages({ "any.required": "Le mot de passe est obligatoire" }),
+        confMdp: Joi.string().required().valid(Joi.ref("mdp")).messages({
+            "any.required": "Les deux mots de passe sont incohérents.",
+            "string.empty": "La confirmation du mot de passe est obligatoire.",
+        }),
+        membre: Joi.number().required().messages({ "any.required": "Selectionner membre" }),
+        role: Joi.number().required().messages({ "any.required": "Selectionner un role" }),
+    })
+
+    if (errors.length) {
+        return res.status(400).json({ message: errors[0]?.message })
+    }
+
     try {
-        const findUser: any = isFindColumn("users", ["login", "fkMembre"], [login, membre])
+        const findUser = isFindColumn("users", ["login", "fkMembre"], [login, membre])
         if (!findUser) return res.status(400).json({ message: "Cet utilisateur existe déjà" })
     } catch (error: any) {
         return res.status(400).json({ message: `Erreur ${error.message}` })
@@ -40,12 +53,7 @@ export const signup = async (req: Request, res: Response) => {
     hash(mdp, 10, async (err: any, hash: any) => {
         if (err) return res.status(400).json({ message: "erreur survenu lors du cryptage, veuillez reessayer plutard" })
         try {
-            const createUser = await createData(
-                "users",
-                ["login", "mdp", "fkROle", "fkMembre"],
-                ["?,?,?,?"],
-                [login, hash, role, membre]
-            )
+            const createUser = await createData("users", ["login", "mdp", "fkROle", "fkMembre"], [login, hash, role, membre])
             if (createUser) res.status(200).json({ message: "Enregistrement effectuer" })
             else res.status(400).json({ message: "Erreur survenu lors de l'enregistrement" })
         } catch (error: any) {
@@ -54,15 +62,20 @@ export const signup = async (req: Request, res: Response) => {
     })
 }
 export const login = async (req: Request, res: Response) => {
-    const { login, mdp } = req.body,
-        error = checkError(req.body, {
-            login: Joi.string().required(),
-            mdp: Joi.string().required(),
-        })
-    if (error) return res.status(400).json({ message: error[0]?.message })
+    const { login, mdp } = req.body
+
+    const errors = checkError(req.body, {
+        login: Joi.string().required().messages({ "any.required": "Le login  est obligatoire" }),
+        mdp: Joi.string().required().messages({ "any.required": "Le mot de passe est obligatoire" }),
+    })
+
+    if (errors.length) {
+        return res.status(400).json({ message: errors[0]?.message })
+    }
 
     const user: any = await fetchTableColumns("v_membre_user", ["login"], [login])
-    if (!user[0]) return res.status(403).json({ code: 13, message: ErrorMessage.erreurMdp })
+
+    if (!user[0]) return res.status(403).json({ message: "L'utilisateur n'existe pas" })
 
     compare(mdp, user[0]?.mdp, (err: any, Response: boolean) => {
         if (err) return res.status(400).json({ error: 403, message: ErrorMessage.erreurInscription })

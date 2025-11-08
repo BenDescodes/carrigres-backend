@@ -25,7 +25,7 @@ export const suggestion = async (req: Request, res: Response) => {
                 }
             })
         } else {
-            return res.status(400).json({ message: "Vous n'êtes pas membre, veuillez vous enregistrer" })
+            return res.status(400).json({ message: "Vous n'êtes pas enregistré, veuillez vous enregistrer" })
         }
     } catch (error: any) {
         res.status(400).json({ message: error || "An error occurred" })

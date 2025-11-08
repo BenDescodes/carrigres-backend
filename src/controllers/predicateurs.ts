@@ -73,7 +73,6 @@ export const createPred = async (req: Request, res: Response) => {
             const pred = await createData(
                 "predicateur",
                 ["titre", "nom", "prenom", "eglise", "tkPred", "tel"],
-                ["?", "?", "?", "?", "?", "?"],
                 [titre, nom, prenom, eglise, token, tel]
             )
             if (pred) {

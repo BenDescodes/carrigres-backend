@@ -6,9 +6,9 @@ import {
     fetchAllSermonPasteur,
     fetchOneSermon,
     fetchOtherSermon,
-    fetchPasteurOneSermon,
     updateSermon,
 } from "../controllers/sermons"
+
 import { upload } from "../middleware/multerConfig"
 
 const uploadFiles = upload.fields([{ name: "imageSermon", maxCount: 1 }])
