@@ -21,6 +21,7 @@ const path_1 = __importDefault(require("path"));
 const moment_1 = __importDefault(require("moment"));
 const fs_1 = __importDefault(require("fs"));
 moment_1.default.locale("fr");
+const { query } = require("../config/connect");
 const fetchAllMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const baseUrlProfil = `${req.protocol}://${req.get("host")}/src/images/`;
     try {
@@ -120,7 +121,6 @@ const createMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     conjoint = conjoint == "undefined" ? null : conjoint;
     marie = marie == "undefined" ? null : marie;
     baptise = baptise == "true" ? true : false;
-    console.log(req.body);
     try {
         if (!(yield (0, method_1.isFindColumn)("membre", ["nom", "prenom", "postnom", "telephone"], [nom, prenom, postnom, telephone]))) {
             if (file && (profil === null || profil === void 0 ? void 0 : profil[0])) {
@@ -142,7 +142,7 @@ const createMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 "isBaptise",
                 "tkMembre",
                 "profil",
-            ], ["?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?"], [
+            ], [
                 nom,
                 prenom,
                 postnom,
@@ -293,11 +293,9 @@ const updateMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     error = true;
             }
             if (error) {
-                /* cancelTransaction() */
                 return res.status(400).json({ message: "Erreur survenu lors de la mise à jour" });
             }
             else {
-                /* commitTransaction() */
                 return res.status(200).json({ message: "Modification réussi" });
             }
         }
@@ -406,11 +404,11 @@ const checkMembre = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         return res.status(400).json({ error });
     try {
         const script = "SELECT * FROM membre WHERE nom=? AND prenom=? AND postnom=?";
-        const membresCheck = yield (0, method_1.personalQueryAsync)(script, [nom, prenom, postnom]);
+        const membresCheck = yield query(script, [nom, prenom, postnom]);
         if (membresCheck.length)
-            return res.status(200).json({ message: "Merci ! Vous etês membre", membre: membresCheck[0].tkMembre });
+            return res.status(200).json({ message: "Merci ! Vous etês enregistré", membre: membresCheck[0].tkMembre });
         else
-            return res.status(400).json({ message: "Erreur vous êtes pas membre" });
+            return res.status(400).json({ message: "Erreur vous êtes pas encore enregistré" });
     }
     catch (error) {
         res.status(400).json({ message: error || "An error occurred" });
@@ -422,7 +420,7 @@ const checkOneMembre = (req, res) => __awaiter(void 0, void 0, void 0, function*
     if (tkMembre) {
         const oneMembre = yield (0, method_1.fetchTableColumns)("v_membre_all", ["tkMembre"], [tkMembre]);
         const script = "SELECT nom,prenom,tkMembre FROM membre WHERE fkPere = ?";
-        const childrenMembre = yield (0, method_1.personalQueryAsync)(script, [oneMembre[0].idMembre]);
+        const childrenMembre = yield query(script, [oneMembre[0].idMembre]);
         const items = oneMembre[0];
         const data = {
             idMembre: items.idMembre,

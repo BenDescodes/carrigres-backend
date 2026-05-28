@@ -21,20 +21,30 @@ const jsonwebtoken_1 = require("jsonwebtoken");
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { login, mdp, role, membre, confMdp } = req.body;
-    const error = (0, method_1.checkError)(req.body, {
-        login: joi_1.default.string().required().messages({ "any.only": "Le login  est obligatoire" }),
-        mdp: joi_1.default.string().required().messages({
-            "string.empty": "Le mot de passe est obligatoire.",
-        }),
-        confMdp: joi_1.default.string().required().valid(joi_1.default.ref("mdp")).messages({
-            "any.only": "Les deux mots de passe sont incohérents.",
+    /* const error = checkError(req.body, {
+        login: Joi.string().required().messages({ "any.required": "Le login  est obligatoire" }),
+       
+        confMdp: Joi.string().required().valid(Joi.ref("mdp")).messages({
+            "any.required": "Les deux mots de passe sont incohérents.",
             "string.empty": "La confirmation du mot de passe est obligatoire.",
         }),
-        membre: joi_1.default.number().required().messages({ "string.empty": "Selectionner membre" }),
-        role: joi_1.default.number().required().messages({ "string.empty": "Selectionner un role" }),
+        membre: Joi.number().required().messages({ "string.empty": "Selectionner membre" }),
+        role: Joi.number().required().messages({ "string.empty": "Selectionner un role" }),
+    })
+    if (error) return res.status(400).json({ message: error[0]?.message }) */
+    const errors = (0, method_1.checkError)(req.body, {
+        login: joi_1.default.string().required().messages({ "any.required": "Le login  est obligatoire" }),
+        mdp: joi_1.default.string().required().messages({ "any.required": "Le mot de passe est obligatoire" }),
+        confMdp: joi_1.default.string().required().valid(joi_1.default.ref("mdp")).messages({
+            "any.required": "Les deux mots de passe sont incohérents.",
+            "string.empty": "La confirmation du mot de passe est obligatoire.",
+        }),
+        membre: joi_1.default.number().required().messages({ "any.required": "Selectionner membre" }),
+        role: joi_1.default.number().required().messages({ "any.required": "Selectionner un role" }),
     });
-    if (error)
-        return res.status(400).json({ message: (_a = error[0]) === null || _a === void 0 ? void 0 : _a.message });
+    if (errors.length) {
+        return res.status(400).json({ message: (_a = errors[0]) === null || _a === void 0 ? void 0 : _a.message });
+    }
     try {
         const findUser = (0, method_1.isFindColumn)("users", ["login", "fkMembre"], [login, membre]);
         if (!findUser)
@@ -47,7 +57,7 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (err)
             return res.status(400).json({ message: "erreur survenu lors du cryptage, veuillez reessayer plutard" });
         try {
-            const createUser = yield (0, method_1.createData)("users", ["login", "mdp", "fkROle", "fkMembre"], ["?,?,?,?"], [login, hash, role, membre]);
+            const createUser = yield (0, method_1.createData)("users", ["login", "mdp", "fkROle", "fkMembre"], [login, hash, role, membre]);
             if (createUser)
                 res.status(200).json({ message: "Enregistrement effectuer" });
             else
@@ -61,15 +71,17 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.signup = signup;
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _b, _c;
-    const { login, mdp } = req.body, error = (0, method_1.checkError)(req.body, {
-        login: joi_1.default.string().required(),
-        mdp: joi_1.default.string().required(),
+    const { login, mdp } = req.body;
+    const errors = (0, method_1.checkError)(req.body, {
+        login: joi_1.default.string().required().messages({ "any.required": "Le login  est obligatoire" }),
+        mdp: joi_1.default.string().required().messages({ "any.required": "Le mot de passe est obligatoire" }),
     });
-    if (error)
-        return res.status(400).json({ message: (_b = error[0]) === null || _b === void 0 ? void 0 : _b.message });
+    if (errors.length) {
+        return res.status(400).json({ message: (_b = errors[0]) === null || _b === void 0 ? void 0 : _b.message });
+    }
     const user = yield (0, method_1.fetchTableColumns)("v_membre_user", ["login"], [login]);
     if (!user[0])
-        return res.status(403).json({ code: 13, message: method_1.ErrorMessage.erreurMdp });
+        return res.status(403).json({ message: "L'utilisateur n'existe pas" });
     (0, bcrypt_1.compare)(mdp, (_c = user[0]) === null || _c === void 0 ? void 0 : _c.mdp, (err, Response) => {
         if (err)
             return res.status(400).json({ error: 403, message: method_1.ErrorMessage.erreurInscription });

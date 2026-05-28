@@ -120,7 +120,7 @@ export const fetchOneSermon = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(400).json(error)
     }
-    try {
+    /*  try {
         const sermon: any[] = await fetchTableColumns("v_sermon_all", ["IdSermon"], [id])
 
         if (!sermon.length) return res.status(200).json([])
@@ -154,7 +154,7 @@ export const fetchOneSermon = async (req: Request, res: Response) => {
         return res.status(200).json(oneSermon)
     } catch (error) {
         return res.status(400).json({ error: error.message || error })
-    }
+    } */
 }
 
 export const fetchAllSermonPasteur = async (req: Request, res: Response) => {

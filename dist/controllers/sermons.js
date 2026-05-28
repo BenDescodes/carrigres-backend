@@ -12,9 +12,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteSermon = exports.updateSermon = exports.createSermon = exports.fetchPasteurOneSermon = exports.fetchAllSermonPasteur = exports.fetchOneSermon = exports.fetchOtherSermon = exports.fetchAllSermon = void 0;
+exports.deleteSermon = exports.updateSermon = exports.createSermon = exports.fetchAllSermonPasteur = exports.fetchOneSermon = exports.fetchOtherSermon = exports.fetchAllSermon = void 0;
 const joi_1 = __importDefault(require("joi"));
 const method_1 = require("../helper/method");
+const { query } = require("../config/connect");
 const randomstring_1 = __importDefault(require("randomstring"));
 const dateConfig_1 = __importDefault(require("../helper/dateConfig"));
 const moment_1 = __importDefault(require("moment"));
@@ -52,8 +53,16 @@ const fetchAllSermon = (req, res) => __awaiter(void 0, void 0, void 0, function*
 exports.fetchAllSermon = fetchAllSermon;
 const fetchOtherSermon = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const script = "SELECT * FROM v_sermon_all WHERE nom!=? OR nom is null AND prenom!=? OR prenom is null ORDER BY dateSermon DESC";
-        const sermon = yield (0, method_1.personalQueryAsync)(script, ["Kapanga", "Theophile"]);
+        /* const script =
+            "SELECT * FROM v_sermon_all WHERE nom!=? OR nom is null AND prenom!=? OR prenom is null ORDER BY dateSermon DESC" */
+        const script = `
+                        SELECT *
+                        FROM v_sermon_all
+                        WHERE (nom != ? OR nom IS NULL)
+                        AND (prenom != ? OR prenom IS NULL)
+                        ORDER BY dateSermon DESC
+                        `;
+        const sermon = yield query(script, ["Kapanga", "Theophile"]);
         if (!sermon.length)
             return res.status(200).json([]);
         const fullSermons = yield Promise.all(sermon.map((items) => __awaiter(void 0, void 0, void 0, function* () {
@@ -91,14 +100,13 @@ const fetchOneSermon = (req, res) => __awaiter(void 0, void 0, void 0, function*
         return res.status(400).json({ error });
     try {
         const sermon = yield (0, method_1.fetchTableColumns)("v_sermon_all", ["IdSermon"], [id]);
-        console.log(sermon[0]);
         if (!sermon.length)
             return res.status(200).json([]);
         const items = sermon[0];
         const predicateur = items.nomPredicateur
-            ? `${items.prenomPredicateur} ${items.nomPredicateur} `
-            : `${items.prenom} ${items.nom} `;
-        const eglise = items.eglise ? items.eglise : "Assemblée Chrétienne de Carrigres";
+            ? `${items.prenomPredicateur} ${items.nomPredicateur}`
+            : `${items.prenom} ${items.nom}`;
+        const eglise = items.eglise || "Assemblée Chrétienne de Carrigres";
         const oneSermon = {
             id: items.idSermon,
             theme: items.theme,
@@ -117,6 +125,41 @@ const fetchOneSermon = (req, res) => __awaiter(void 0, void 0, void 0, function*
     catch (error) {
         return res.status(400).json(error);
     }
+    /*  try {
+        const sermon: any[] = await fetchTableColumns("v_sermon_all", ["IdSermon"], [id])
+
+        if (!sermon.length) return res.status(200).json([])
+
+        const [oneSermon] = await Promise.all([
+            (async () => {
+                const items = sermon[0]
+
+                const predicateur: string = items.nomPredicateur
+                    ? `${items.prenomPredicateur} ${items.nomPredicateur}`
+                    : `${items.prenom} ${items.nom}`
+
+                const eglise: string = items.eglise || "Assemblée Chrétienne de Carrigres"
+
+                return {
+                    id: items.idSermon,
+                    theme: items.theme,
+                    passage: items.passage,
+                    dateSermon: moment(items.dateSermon).format("YYYY-MM-DD"),
+                    dateSermonFront: dateFrancais(items.dateSermon),
+                    predicateur: predicateur,
+                    eglise: eglise,
+                    lienFacebook: items.lienFacebook,
+                    lienFacebook2: items.lienFacebook2,
+                    lienYoutube: items.lienYoutube,
+                    vue: items.nbrVue,
+                }
+            })(),
+        ])
+
+        return res.status(200).json(oneSermon)
+    } catch (error) {
+        return res.status(400).json({ error: error.message || error })
+    } */
 });
 exports.fetchOneSermon = fetchOneSermon;
 const fetchAllSermonPasteur = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -150,8 +193,6 @@ const fetchAllSermonPasteur = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.fetchAllSermonPasteur = fetchAllSermonPasteur;
-const fetchPasteurOneSermon = (req, res) => __awaiter(void 0, void 0, void 0, function* () { });
-exports.fetchPasteurOneSermon = fetchPasteurOneSermon;
 const createSermon = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { theme, passage, date, lienFacebook, lienYoutube, lienFacebook2, predicateur } = req.body, token = randomstring_1.default.generate(6), error = (0, method_1.checkError)(req.body, {
         theme: joi_1.default.string().required(),
@@ -169,7 +210,7 @@ const createSermon = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             const dataMembre = yield (0, method_1.fetchTableColumns)("membre", ["tkMembre"], [predicateur]);
             const dataPredicateur = yield (0, method_1.fetchTableColumns)("predicateur", ["tkPred"], [predicateur]);
             const fkPred = dataMembre.length ? dataMembre[0].tkMembre : dataPredicateur.length ? dataPredicateur[0].tkPred : null;
-            const sermon = yield (0, method_1.createData)("sermon", ["theme", "passage", "dateSermon", "lienFacebook", "lienYoutube", "lienFacebook2", "tkSermon", "fkPredicateur"], ["?", "?", "?", "?", "?", "?", "?", "?"], [theme, passage, date, lienFacebook, lienYoutube, lienFacebook2, token, fkPred]);
+            const sermon = yield (0, method_1.createData)("sermon", ["theme", "passage", "dateSermon", "lienFacebook", "lienYoutube", "lienFacebook2", "tkSermon", "fkPredicateur"], [theme, passage, date, lienFacebook, lienYoutube, lienFacebook2, token, fkPred]);
             if (sermon)
                 return res.status(200).json({ message: "Enregistrement effectué" });
         }

@@ -1,23 +1,12 @@
 import Joi from "joi"
 import { Request, Response } from "express"
-import {
-    createData,
-    fetchTableData,
-    fetchTableColumns,
-    isFindColumn,
-    checkError,
-    deleteData,
-    updateData,
-    cancelTransaction,
-    startTransaction,
-    commitTransaction,
-    personalQueryAsync,
-} from "../helper/method"
+import { createData, fetchTableData, fetchTableColumns, isFindColumn, checkError, deleteData, updateData } from "../helper/method"
 import { fileCompresse } from "../middleware/multerConfig"
 import randomstring from "randomstring"
 import path from "path"
 import moment from "moment"
 import fs from "fs"
+const { query } = require("../config/connect")
 moment.locale("fr")
 
 /* interface MulterRequest extends Request {
@@ -615,7 +604,7 @@ export const checkMembre = async (req: Request, res: Response) => {
     if (error?.length) return res.status(400).json({ error })
     try {
         const script = "SELECT * FROM membre WHERE nom=? AND prenom=? AND postnom=?"
-        const membresCheck: any = await personalQueryAsync(script, [nom, prenom, postnom])
+        const membresCheck: any = await query(script, [nom, prenom, postnom])
         if (membresCheck.length)
             return res.status(200).json({ message: "Merci ! Vous etês membre", membre: membresCheck[0].tkMembre })
         else return res.status(400).json({ message: "Erreur vous êtes pas membre" })
@@ -628,7 +617,7 @@ export const checkOneMembre = async (req: Request, res: Response) => {
     if (tkMembre) {
         const oneMembre: any = await fetchTableColumns("v_membre_all", ["tkMembre"], [tkMembre])
         const script = "SELECT nom,prenom,tkMembre FROM membre WHERE fkPere = ?"
-        const childrenMembre: any = await personalQueryAsync(script, [oneMembre[0].idMembre])
+        const childrenMembre: any = await query(script, [oneMembre[0].idMembre])
         const items = oneMembre[0]
         const data = {
             idMembre: items.idMembre,

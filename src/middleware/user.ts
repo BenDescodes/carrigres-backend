@@ -1,7 +1,6 @@
 import { verify } from "jsonwebtoken"
 import { secret } from "../types/type"
 import { Request, Response, NextFunction } from "express"
-import connect from "../config/connect"
 import { MysqlError } from "mysql"
 
 export const auth = (req: any, res: Response, next: NextFunction) => {

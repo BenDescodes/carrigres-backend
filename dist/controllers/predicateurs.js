@@ -84,7 +84,7 @@ const createPred = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         return res.status(400).json(error);
     try {
         if (!(yield (0, method_1.isFindColumn)("predicateur", ["nom", "prenom", "eglise"], [nom, prenom, eglise]))) {
-            const pred = yield (0, method_1.createData)("predicateur", ["titre", "nom", "prenom", "eglise", "tkPred", "tel"], ["?", "?", "?", "?", "?", "?"], [titre, nom, prenom, eglise, token, tel]);
+            const pred = yield (0, method_1.createData)("predicateur", ["titre", "nom", "prenom", "eglise", "tkPred", "tel"], [titre, nom, prenom, eglise, token, tel]);
             if (pred) {
                 return res.status(200).json({ message: "Enregistrement effectué" });
             }

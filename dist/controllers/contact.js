@@ -40,7 +40,7 @@ const suggestion = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             });
         }
         else {
-            return res.status(400).json({ message: "Vous n'êtes pas membre, veuillez vous enregistrer" });
+            return res.status(400).json({ message: "Vous n'êtes pas enregistré, veuillez vous enregistrer" });
         }
     }
     catch (error) {

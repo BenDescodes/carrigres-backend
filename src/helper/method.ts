@@ -1,5 +1,5 @@
 const Joi = require("joi")
-const { SchemaMap } = Joi
+import type { SchemaMap } from "joi"
 /* import connect from "../config/connect" */
 const { query } = require("../config/connect")
 
@@ -157,7 +157,7 @@ export const checkError = (data: unknown, rules: SchemaMap): Array<{ field: stri
 
     if (!error) return []
 
-    return error.details.map((detail) => ({
+    return error.details.map((detail: any) => ({
         field: detail.context?.label ?? detail.path.join("."),
         message: detail.message,
     }))

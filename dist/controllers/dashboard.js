@@ -16,7 +16,7 @@ const dashboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const membre = yield (0, method_1.countTableData)("membre");
         const predicateur = yield (0, method_1.countTableData)("predicateur");
         const sermon = yield (0, method_1.countTableData)("sermon");
-        res.status(200).json({ membre: membre[0].count, predVisiteur: predicateur[0].count, sermon: sermon[0].count });
+        res.status(200).json({ membre: membre, predVisiteur: predicateur, sermon: sermon });
     }
     catch (error) {
         return res.status(400).json(error);
